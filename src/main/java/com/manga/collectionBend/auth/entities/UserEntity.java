@@ -12,6 +12,7 @@ public class UserEntity {
 
     private String name;
 
+//    this var contains unique naming value - only one unique name exists for each user
     private String username;
 
     private String email;
