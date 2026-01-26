@@ -8,7 +8,8 @@ import java.util.Optional;
 public interface UserRepo extends JpaRepository<UserEntity, Integer> {
 
 //    JpaRepository class does not have specific field finding methods-so we create them
-//    findByUsername- this is the convention of JPA to write custom Repo method to automatically generate its own query to find/fetch our specific field from DB
-//    naming formate- findBy+CapitalFirstLetter of Field/Column name(eg-Username)
-    Optional<UserEntity> findByUsername(String username);
+//    findByUsername or findByEmail- this is the convention of JPA to write custom Repo method to automatically generate its own query to find/fetch our specific field from DB
+//    naming formate- findBy+CapitalFirstLetter of Field/Column name(eg-Username) or you can create a sql query to fetch data
+//    we are using Email field for authentication for Security-Username value- so we use findbyEmail
+    Optional<UserEntity> findByEmail(String username);
 }

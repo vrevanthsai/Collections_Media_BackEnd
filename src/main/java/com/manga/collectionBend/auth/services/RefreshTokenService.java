@@ -25,7 +25,7 @@ public class RefreshTokenService {
 
 //  Generating Refresh Token Method
     public RefreshToken createRefreshToken(String username){
-        UserEntity user = userRepo.findByUsername(username)
+        UserEntity user = userRepo.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("user not found with email: " + username));
 
 //        getting RefreshToken data from user table

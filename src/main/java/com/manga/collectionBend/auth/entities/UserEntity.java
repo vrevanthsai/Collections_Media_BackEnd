@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
@@ -14,9 +15,8 @@ import java.util.List;
 @Table(name = "users")
 // UserDetails is used for integrating this userEntity class with spring security for login filter
 public class UserEntity implements UserDetails {
-    public UserEntity(Integer userId, String name, String username, String email, String password, RefreshToken refreshToken, UserRole role,
-                      boolean isEnabled, boolean isAccountNonExpired, boolean isAccountNonLocked,
-                      boolean isCredentialsNonExpired) {
+    public UserEntity(Integer userId, String name, String username, String email,
+                      String password, RefreshToken refreshToken, UserRole role) {
         this.userId = userId;
         this.name = name;
         this.username = username;
@@ -24,10 +24,6 @@ public class UserEntity implements UserDetails {
         this.password = password;
         this.refreshToken = refreshToken;
         this.role = role;
-        this.isEnabled = isEnabled;
-        this.isAccountNonExpired = isAccountNonExpired;
-        this.isAccountNonLocked = isAccountNonLocked;
-        this.isCredentialsNonExpired = isCredentialsNonExpired;
     }
 
     public UserEntity(){}
@@ -64,15 +60,6 @@ public class UserEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-//    vars for abstract methods and by default user will not login by marking all as 'true'
-    private boolean isEnabled = true;
-
-    private boolean isAccountNonExpired = true;
-
-    private boolean isAccountNonLocked = true;
-
-    private boolean isCredentialsNonExpired = true;
-
     public Integer getUserId() {
         return userId;
     }
@@ -95,7 +82,9 @@ public class UserEntity implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+//        used for checking authorities based on given UserRole Enum values
+//        used for spring security identifying the permissions
+        return List.of(new SimpleGrantedAuthority(role.name()));
     }
 
     @Override
@@ -109,23 +98,24 @@ public class UserEntity implements UserDetails {
         return email; // or username
     }
 
+    //  return value for abstract methods will be true and by default user will not login by marking all as 'true'
     @Override
     public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+        return true;
     }
 }
