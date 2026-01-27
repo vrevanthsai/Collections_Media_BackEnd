@@ -33,7 +33,8 @@ public class RefreshTokenService {
 
 //        if refreshToken is empty then generate a new one
         if(refreshToken == null){
-            long refreshTokenValidity = 5*60*60*10000; // equal to 5 hours
+//            long refreshTokenValidity = 5*60*60*10000; // (formate-hrs*mins*sec*millisec) equal to 5 hours
+            long refreshTokenValidity = 30 * 1000; // =30Sec for testing API purpose
 
 //            this builder should have all vars of RefreshToken class
             refreshToken = RefreshToken.builder()
