@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 //used for marking this file as a spring security configuration file
+// This file contains Security config Methods required for Main-Custom-Security File(SecurityConfig.java)
 @Configuration
 public class ApplicationConfig {
 
@@ -34,18 +35,18 @@ public class ApplicationConfig {
 
 //    -- contains Deprecated Methods for DaoAuthenticationProvider() and setPasswordEncoder()
 //    You actually don’t need DaoAuthenticationProvider at all in most cases. so use only AuthenticationManager() method only
-//    @Bean
-////    this method used for authenticating the user
-////    indicates a class can process a specific Authentication implementation
-//    public AuthenticationProvider authenticationProvider(){
-////        as UserDeatilsService uses DaoAuthentication- we create a object for it
-//        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-////        this will set all userDetails with provider
-//        authenticationProvider.setUserDetailsService(userDetailsService());
-////        this will encode password of user before storing instead of raw data
-//        authenticationProvider.setPasswordEncoder(passwordEncoder());
-//        return authenticationProvider;
-//    }
+    @Bean
+//    this method used for authenticating the user
+//    indicates a class can process a specific Authentication implementation
+    public AuthenticationProvider authenticationProvider(){
+//        as UserDeatilsService uses DaoAuthentication- we create a object for it
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+//        this will set all userDetails with provider
+        authenticationProvider.setUserDetailsService(userDetailsService());
+//        this will encode password of user before storing instead of raw data
+        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        return authenticationProvider;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder(){

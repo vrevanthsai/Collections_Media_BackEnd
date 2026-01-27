@@ -2,16 +2,16 @@ package com.manga.collectionBend.auth.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+//import lombok.AllArgsConstructor;
+//import lombok.Builder;
+//import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
 @Entity
-@Builder // creates builder methods
-@NoArgsConstructor
-@AllArgsConstructor
+//@Builder // creates builder methods
+//@NoArgsConstructor
+//@AllArgsConstructor
 public class RefreshToken {
 
     public RefreshToken(Integer tokenId, String refreshToken, Instant expirationTime, UserEntity user) {
@@ -38,6 +38,7 @@ public class RefreshToken {
 //    onetoone is for mapping two tables with each other
 //    defines a relationship where one instance of an entity is associated with exactly one instance of another entity.
     @OneToOne
+    @JoinColumn(name = "user_id", nullable = false) // to map both tables properly and user_id(primaryKey)  is default naming
     private UserEntity user;
 
     public Integer getTokenId() {
@@ -59,7 +60,7 @@ public class RefreshToken {
     /* =======================
            Builder implementation from ChatGpt
            ======================= */
-// using manual builder() method logic because lombok is not working
+// using manual builder() method logic because lombok is not working - lombok methods works when running server but does not work while writing code(in IDE-suggestions)
     public static Builder builder() {
         return new Builder();
     }
