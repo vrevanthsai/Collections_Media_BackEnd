@@ -4,7 +4,6 @@ import com.manga.collectionBend.auth.entities.RefreshToken;
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.RefreshTokenRepo;
 import com.manga.collectionBend.auth.repositories.UserRepo;
-import jakarta.transaction.Transactional;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -54,9 +53,6 @@ public class RefreshTokenService {
     }
 
 //    Verifying RefreshToken Method
-// our delete happens inside a service method → it must be transactional-
-// to avoid errors while deleting refreshToken-row and still that user-row is pointing to deleted refreshToken value
-    @Transactional
     public RefreshToken verifyRefreshToken(String refreshToken){
         RefreshToken refToken = refreshTokenRepo.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new RuntimeException("Refresh token not found")); // create Custom Exception in exceptions-PACKAGE TO SEND proper Error msg to client
