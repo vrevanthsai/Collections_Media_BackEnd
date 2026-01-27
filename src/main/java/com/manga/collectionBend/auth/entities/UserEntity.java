@@ -80,6 +80,35 @@ public class UserEntity implements UserDetails {
         return refreshToken;
     }
 
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setRefreshToken(RefreshToken refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
+
+    //    Abstract Methods of UserDetails Interface
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
 //        used for checking authorities based on given UserRole Enum values
@@ -117,5 +146,75 @@ public class UserEntity implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    /* =======================
+       Builder- manual implementation because lombok- @Builder is not working
+       - lombok methods works when running server but does not work while writing code(in IDE-suggestions)
+       ======================= */
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private Integer userId;
+        private String name;
+        private String email;
+        private String username;
+        private String password;
+        private RefreshToken refreshToken;
+        private UserRole role;
+
+        private Builder() {
+        }
+
+        public Builder userId(Integer userId) {
+            this.userId = userId;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public Builder username(String username) {
+            this.username = username;
+            return this;
+        }
+
+        public Builder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public Builder refreshToken(RefreshToken refreshToken) {
+            this.refreshToken = refreshToken;
+            return this;
+        }
+
+        public Builder role(UserRole role) {
+            this.role = role;
+            return this;
+        }
+
+        public UserEntity build() {
+            UserEntity user = new UserEntity();
+            user.userId = this.userId;
+            user.name = this.name;
+            user.email = this.email;
+            user.username = this.username;
+            user.password = this.password;
+            user.refreshToken = this.refreshToken;
+            user.role = this.role;
+            return user;
+        }
     }
 }

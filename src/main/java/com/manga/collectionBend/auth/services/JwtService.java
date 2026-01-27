@@ -66,7 +66,7 @@ public class JwtService {
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(userDetails.getUsername()) // it will have email value which is unique
                 .setIssuedAt(new Date(System.currentTimeMillis()))
 //                .setExpiration(new Date(System.currentTimeMillis() + 25 * 100000)) // = 40 mins
                 .setExpiration(new Date(System.currentTimeMillis() + 25 * 1000))
