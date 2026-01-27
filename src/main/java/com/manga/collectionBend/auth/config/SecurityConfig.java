@@ -4,6 +4,7 @@ import com.manga.collectionBend.auth.services.AuthFilterService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -13,6 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity // says to spring security to follow this flow instead of default flow
+@EnableMethodSecurity // this enables pre-Authorization( like permissions- Roles-based allowing user to access or not some apis)
 public class SecurityConfig {
 
     private final AuthFilterService authFilterService;
