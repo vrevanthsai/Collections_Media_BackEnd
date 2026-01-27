@@ -9,6 +9,7 @@ import com.manga.collectionBend.service.CollectionService;
 import com.manga.collectionBend.utils.AppConstants;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,14 +28,18 @@ public class CollectionController {
     }
 
 //    POST API-ADD
-    // it receives json/string data part and image file part from client
-    // collectionDto Type will be String if it comes from FormData and,
-    // it will be direct json(CollectionDto- where springboot will convert automatically from json to DTO object) if it is raw data from PostMan
-    // if we use String type then we need to convert String data to DTO object to send to service method
+// this is the Syntax for Pre-Authorization- Role-based - Access-Restriction(one of the Security filter) and user's without 'ADMIN' role cant access this API and throws Error(Bad Request)
+//    and this is linked with UserEntity class- GrantedAuthority() method which has logged-In user role value
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/add-collection")
     public ResponseEntity<CollectionDto> addCollectionHandler(@RequestPart MultipartFile file,
                                                               @RequestPart String collectionDto) throws IOException, EmptyFileException {
-//        validation for file
+        // it receives json/string data part and image file part from client
+        // collectionDto Type will be String if it comes from FormData and,
+        // it will be direct json(CollectionDto- where springboot will convert automatically from json to DTO object) if it is raw data from PostMan
+        // if we use String type then we need to convert String data to DTO object to send to service method
+
+        //        validation for file
         if(file.isEmpty()){
             throw new EmptyFileException("File is empty! Please send another file!");
         }
