@@ -38,7 +38,7 @@ public class RefreshToken {
 //    onetoone is for mapping two tables with each other
 //    defines a relationship where one instance of an entity is associated with exactly one instance of another entity.
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false) // to map both tables properly and user_id(primaryKey)  is default naming
+    @JoinColumn(name = "user_id", nullable = false) // child-table- to map both tables properly and user_id(primaryKey) is default naming for UserTable in MySql
     private UserEntity user;
 
     public Integer getTokenId() {
