@@ -56,6 +56,15 @@ public class UserEntity implements UserDetails {
     @OneToOne(mappedBy = "user")
     private RefreshToken refreshToken;
 
+//    mapping ForgotPassword entity with User entity(Parent-Table)
+//    @OneToOne(mappedBy = "user")
+//    private ForgotPassword forgotPassword;
+
+//   ForgotPassword field/column data should be deleted automatically from Users-table when that user resets password
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JoinColumn(name = "forgot_password_id")
+    private ForgotPassword forgotPassword;
+
 //    which handles enum values
     @Enumerated(EnumType.STRING)
     private UserRole role;
