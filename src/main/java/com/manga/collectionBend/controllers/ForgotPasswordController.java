@@ -42,7 +42,17 @@ public class ForgotPasswordController {
     public ResponseEntity<String> verifyEmail(@PathVariable String email){
 //        find/valide user provided email exists or not
         UserEntity user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Please provide valid email which you registered! "+ email)); // create Custom Exception response
+                .orElseThrow(() -> new UsernameNotFoundException("Please provide valid email which you registered! "+ email)); // Todo- create Custom Exception response
+
+        //      fetching fp row-data for preventing sending multiple Otp mails when user clicks-send Otp button from UI multiple times
+        Optional<ForgotPassword> existingFp = forgotPasswordRepo.findByEmail(email);
+//                .orElse(new ForgotPassword()); // if fp row-data is not there that means user is trying first time - so return empty object
+
+//        checking if Fp-row data already exists for this user(email) or not to prevent any duplicate-key related errors
+//        isPresent() checks var has value(returns True) or null(returns False)
+        if(existingFp.isPresent()){
+            return new ResponseEntity<>("Already OTP-Email has been sent to your provided mail- check your inbox", HttpStatus.EXPECTATION_FAILED);
+        }
 
 //        extract otp from our custom method
         int otp = otpGenerator();
@@ -50,7 +60,7 @@ public class ForgotPasswordController {
 //        creating the Mailbody object
         MailBody mailBody = MailBody.builder()
                 .to(email)
-                .subject("OTP for Forgot password Request")
+                .subject("OTP for Forgot password Request of Collection Media Application")
                 .text("This is the OTP for your Forgot password Request: " + otp)
                 .build();
 
@@ -59,6 +69,8 @@ public class ForgotPasswordController {
                 .otp(otp)
                 .expirationTime(new Date(System.currentTimeMillis() + 70 * 1000)) // = 1 min.70 sec for testing( for RealTime= 5 to 10 mins)
                 .user(user)
+                .email(email)
+                .verificationStatus(false) // initially it will be false
                 .build();
 
 //        send mail to user
@@ -89,7 +101,7 @@ public class ForgotPasswordController {
 //     if we get fp-Data then the provided otp value from client is correct
 //     or we have empty data in fp-var then otp provided is wrong which is not present in our stored data-records
         ForgotPassword fp = forgotPasswordRepo.findByOtpAndUser(otp, user)
-                .orElseThrow(() -> new RuntimeException("Invalid OTP for email: "+ email)); // create Custom Exception response
+                .orElseThrow(() -> new RuntimeException("Invalid OTP for email: "+ email)); // Todo- create Custom Exception response
 
 //        compares stored expiration time range with present time when user clicks for verify OTP-button for varifying his OTP
 //       returns True if present time is outside(exceeded) the expiration time range(1min.70sec-from when it was created) or else False
@@ -100,6 +112,9 @@ public class ForgotPasswordController {
 //        we send these res to our UI-frontend where it will ask for re-send otp
             return new ResponseEntity<>("OTP has expired", HttpStatus.EXPECTATION_FAILED); // status code - 417
         }
+
+//        setting True to verification_status var of FP row-table - which will be used for 3rd Api
+        forgotPasswordRepo.updateVerificationStatus(email,true);
 
 //        if it passes all above conditions/statements - then provided otp is valid and is within expirationTime range
         return ResponseEntity.ok("OTP verified!");
@@ -115,11 +130,22 @@ public class ForgotPasswordController {
             return new ResponseEntity<>("Please enter the password again- both are not matching!", HttpStatus.EXPECTATION_FAILED);
         }
 
+//      fetching fp row-data to delete it after successfully password is changed
+        ForgotPassword fp = forgotPasswordRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("FP record details not found for provided email: "+ email +" please a Otp mail for verifying")); // Todo- create Custom Exception response
+
 //        encrypting the new password
         String encodedPassword = passwordEncoder.encode(changePassword.password());
 
-//        updating the new password in DB-Users table
-        userRepo.updatePassword(email, encodedPassword);
+//        if user already verified his Otp in 2nd Api logic then we save new Password into db or send error
+        if(fp.isVerificationStatus()){
+            //        updating the new password in DB-Users table
+            userRepo.updatePassword(email, encodedPassword);
+//        deleting fp row-data after saving new password into table to avoid any duplicate-key related errors when trying to access 1st api again
+            forgotPasswordRepo.deleteById(fp.getFpId());
+        }else{
+            return new ResponseEntity<>("Please verify your OTP then only you can change your password!", HttpStatus.EXPECTATION_FAILED);
+        }
 
         return ResponseEntity.ok("Password changed successfully!");
     }

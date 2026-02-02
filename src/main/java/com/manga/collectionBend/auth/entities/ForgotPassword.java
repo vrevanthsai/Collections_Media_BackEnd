@@ -29,4 +29,11 @@ public class ForgotPassword {
     @OneToOne // will be associated with that particular user-table who asked for forgot pwd
     @JoinColumn(name = "user_id", nullable = false) // child-table- to map both tables properly and user_id(primaryKey) is default naming for UserTable in MySql
     private UserEntity user;
+
+//    we include email field for later finding this row in table and deleting this row-data when user successfully changes his password
+    @Column(nullable = false)
+    private String email;
+
+    @Column
+    private boolean verificationStatus;
 }
