@@ -1,15 +1,13 @@
 package com.manga.collectionBend.auth.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 
 @Entity
 // lombok methods - for shortcuts
+@Data // contains all core lombok methods
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
