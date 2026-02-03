@@ -61,7 +61,10 @@ public class AuthService {
 //    Login Api Service Method
     public AuthResponse login(LoginRequest loginRequest){
 //        this authenticates User-login credentials- if user is authenticated then only he can access our apis/services
-        authenticationManager.authenticate(  // this is linked with our jwtService and AuthFilterChain security mechanism
+        // this is linked with our jwtService and AuthFilterChain security mechanism
+//        if provided credentials are correct then it will go to next step or returns 403 forbidden
+//        Todo- create a custom exception message to user to tell provided credentials are incorrect
+        authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getEmail(),
                         loginRequest.getPassword()

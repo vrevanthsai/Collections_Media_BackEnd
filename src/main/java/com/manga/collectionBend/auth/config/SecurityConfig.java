@@ -30,7 +30,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
          http.csrf(AbstractHttpConfigurer::disable) // to disable csrf
                  .authorizeHttpRequests(auth -> auth
-                         .requestMatchers("/api/v1/auth/**")// this is the Base(starting) Path of all auth-APIs like login/register etc
+                         .requestMatchers("/api/v1/auth/**", "/forgotPassword/**") // this is the Base(starting) Path of all auth-APIs like login/register etc and another forgotPassword path
                          .permitAll() // allows the apis which has auth base apis(can access apis without credentials)
                          .anyRequest() // apis which are not from auth base path ,that apis are blocked and asks for authentication
                          .authenticated())

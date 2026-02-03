@@ -2,9 +2,11 @@ package com.manga.collectionBend.auth.repositories;
 
 import com.manga.collectionBend.auth.entities.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+@Repository
 public interface RefreshTokenRepo extends JpaRepository<RefreshToken, Integer> {
 //    custom method to fetch RefreshToken field data from its Table
 //    JpaRepository class does not have specific field finding methods-so we create them
