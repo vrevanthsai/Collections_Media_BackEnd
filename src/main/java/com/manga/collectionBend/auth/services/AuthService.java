@@ -43,6 +43,9 @@ public class AuthService {
                 .role(UserRole.USER) // by Default - All Nwe User-Registers will have Role as USER-later it will be changed to Admin
                 .build();
 
+        //        Todo- Add Validation logic which prevents Users from creating/registering Accounts with same email-id or
+        //         already existing Email-id from DB and send Custom Error msg
+
 //        Saving the Stored-Object into UserTable
         UserEntity savedUser = userRepo.save(user);
 
@@ -55,6 +58,9 @@ public class AuthService {
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken.getRefreshToken())
+                .name(savedUser.getName())
+                .email(savedUser.getEmail())
+                .username(savedUser.getUsername())
                 .build();
     }
 
@@ -81,6 +87,9 @@ public class AuthService {
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken.getRefreshToken())
+                .name(user.getName())
+                .email(user.getEmail())
+                .username(user.getUsername())
                 .build();
     }
 }

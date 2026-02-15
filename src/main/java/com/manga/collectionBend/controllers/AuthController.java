@@ -11,13 +11,11 @@ import com.manga.collectionBend.auth.utils.LoginRequest;
 import com.manga.collectionBend.auth.utils.RefreshTokenRequest;
 import com.manga.collectionBend.auth.utils.RegisterRequest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 // this file contains all Auth-APIs endpoints
 @RestController
+@CrossOrigin(origins = "*") // to allow other sources to access this controller APIs and * is allow all
 @RequestMapping("/api/v1/auth/") // same base path should be in SecurityConfig file
 public class AuthController {
 
