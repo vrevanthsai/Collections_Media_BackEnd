@@ -19,7 +19,7 @@ public class UserEntity implements UserDetails {
                       String password, RefreshToken refreshToken, UserRole role) {
         this.userId = userId;
         this.name = name;
-        this.username = username;
+        this.uniqueUsername = username;
         this.email = email;
         this.password = password;
         this.refreshToken = refreshToken;
@@ -36,9 +36,11 @@ public class UserEntity implements UserDetails {
     private String name;
 
 //    this var contains unique naming value - only one unique name exists for each user
-    @NotBlank(message = "The username field can't be blank")
-    @Column(unique = true)
-    private String username;
+    @NotBlank(message = "The uniqueUsername field can't be blank")
+    @Column(name = "username", unique = true)
+//    changing var-naming from username to uniqueUsername for sending uniqueUsername-field data to frontend properly
+//    without overlapping with email which is used for getUsername() method for UserDetails-SpringSecurity
+    private String uniqueUsername;
 
     @NotBlank(message = "The email field can't be blank")
     @Column(unique = true)
@@ -97,8 +99,12 @@ public class UserEntity implements UserDetails {
         this.name = name;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUniqueUsername(String username) {
+        this.uniqueUsername = username;
+    }
+
+    public String getUniqueUsername() {
+        return this.uniqueUsername = uniqueUsername;
     }
 
     public void setEmail(String email) {
@@ -133,7 +139,7 @@ public class UserEntity implements UserDetails {
 //    this getter method is from interface
     @Override
     public String getUsername() {
-        return email; // or username
+        return email; // or uniqueUsername
     }
 
     //  return value for abstract methods will be true and by default user will not login by marking all as 'true'
@@ -171,7 +177,7 @@ public class UserEntity implements UserDetails {
         private Integer userId;
         private String name;
         private String email;
-        private String username;
+        private String uniqueUsername;
         private String password;
         private RefreshToken refreshToken;
         private UserRole role;
@@ -195,7 +201,7 @@ public class UserEntity implements UserDetails {
         }
 
         public Builder username(String username) {
-            this.username = username;
+            this.uniqueUsername = username;
             return this;
         }
 
@@ -219,7 +225,7 @@ public class UserEntity implements UserDetails {
             user.userId = this.userId;
             user.name = this.name;
             user.email = this.email;
-            user.username = this.username;
+            user.uniqueUsername = this.uniqueUsername;
             user.password = this.password;
             user.refreshToken = this.refreshToken;
             user.role = this.role;

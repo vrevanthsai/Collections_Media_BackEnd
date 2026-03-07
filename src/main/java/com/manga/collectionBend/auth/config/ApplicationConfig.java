@@ -40,9 +40,9 @@ public class ApplicationConfig {
 //    indicates a class can process a specific Authentication implementation
     public AuthenticationProvider authenticationProvider(){
 //        as UserDeatilsService uses DaoAuthentication- we create a object for it
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(); // Todo- use modern logic instead of deprecated methods
 //        this will set all userDetails with provider
-        authenticationProvider.setUserDetailsService(userDetailsService());
+        authenticationProvider.setUserDetailsService(userDetailsService()); // Todo- use modern logic instead of deprecated methods
 //        this will encode password of user before storing instead of raw data
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;

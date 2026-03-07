@@ -60,7 +60,7 @@ public class AuthService {
                 .refreshToken(refreshToken.getRefreshToken())
                 .name(savedUser.getName())
                 .email(savedUser.getEmail())
-                .username(savedUser.getUsername())
+                .username(savedUser.getUniqueUsername()) // sending user-entered username field data - not email
                 .build();
     }
 
@@ -77,6 +77,7 @@ public class AuthService {
                 )
         );
 
+//        user var is of type - UserEntity
         var user = userRepo.findByEmail(loginRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("User not found with provided Email/Password")); // gets logged-In user data
 //        if credentials are correct then generate accessToken and refreshToken
         var accessToken = jwtService.generateToken(user);
@@ -89,7 +90,7 @@ public class AuthService {
                 .refreshToken(refreshToken.getRefreshToken())
                 .name(user.getName())
                 .email(user.getEmail())
-                .username(user.getUsername())
+                .username(user.getUniqueUsername()) // sending user-entered username field data - not email
                 .build();
     }
 }
