@@ -28,7 +28,9 @@ public class SecurityConfig {
     @Bean
 //    this method handles which apis should have security filter and which should not have(like login/register/getRefreshtoken paths does not need security filters- all users can access at start)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
-         http.csrf(AbstractHttpConfigurer::disable) // to disable csrf
+         http
+                 .cors(cors -> {})   // new recommended style- to Enable CORS from Frontend when using SpringSecurity with JWT and add its @CrossOrigin in its controller files
+                 .csrf(AbstractHttpConfigurer::disable) // to disable csrf
                  .authorizeHttpRequests(auth -> auth
                          .requestMatchers("/api/v1/auth/**", "/forgotPassword/**") // this is the Base(starting) Path of all auth-APIs like login/register etc and another forgotPassword path
                          .permitAll() // allows the apis which has auth base apis(can access apis without credentials)

@@ -89,7 +89,8 @@ public class ForgotPasswordController {
 //    creating object for saving the generated OTP value in ForgotPassword Table
         ForgotPassword fp = ForgotPassword.builder()
                 .otp(otp)
-                .expirationTime(new Date(System.currentTimeMillis() + 70 * 1000)) // = 1 min.70 sec for testing( for RealTime= 5 to 10 mins)
+//                .expirationTime(new Date(System.currentTimeMillis() + 70 * 1000)) // = 1 min.70 sec for testing( for RealTime= 5 to 10 mins)
+                .expirationTime(new Date(System.currentTimeMillis() + 20 * 100000)) // = 20,000 secs real time
                 .user(user)
                 .email(email)
                 .verificationStatus(false) // initially it will be false

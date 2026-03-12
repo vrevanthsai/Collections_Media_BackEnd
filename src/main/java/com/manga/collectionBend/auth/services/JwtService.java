@@ -62,14 +62,14 @@ public class JwtService {
             UserDetails userDetails
     ) {
         extraClaims = new HashMap<>(extraClaims);
-        extraClaims.put("role", userDetails.getAuthorities()); // authentication filter based on user-ROLE
+        extraClaims.put("role", userDetails.getAuthorities()); // authentication filter based on user-ROLE and it will only have 2 roles- Admin or User
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername()) // it will have email value which is unique
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 25 * 100000)) // = 40 mins
-//                .setExpiration(new Date(System.currentTimeMillis() + 25 * 1000)) // for testing
+//                .setExpiration(new Date(System.currentTimeMillis() + 25 * 1000)) // for testing= 25 sec for AccessToken
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact(); // this gives Token in string format
     }

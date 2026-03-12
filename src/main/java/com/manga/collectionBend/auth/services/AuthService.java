@@ -40,7 +40,7 @@ public class AuthService {
                 .email(registerRequest.getEmail())
                 .username(registerRequest.getUsername())
                 .password(passwordEncoder.encode(registerRequest.getPassword())) // we encode the raw pwd from client and store that in DB
-                .role(UserRole.USER) // by Default - All Nwe User-Registers will have Role as USER-later it will be changed to Admin
+                .role(UserRole.USER) // by Default - All Nwe User-Registers will have Role as USER-later it will be changed to ADMIN- change it directly from MySql workbench or create a separate api
                 .build();
 
         //        Todo- Add Validation logic which prevents Users from creating/registering Accounts with same email-id or
