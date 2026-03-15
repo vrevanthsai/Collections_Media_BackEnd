@@ -101,8 +101,9 @@ public class CollectionController {
     @PutMapping("/update/{collectionId}")
     public ResponseEntity<CollectionDto> updateCollectionHandler(@PathVariable Integer collectionId,
                                                                  @RequestPart String collectionDtoObj,
-                                                                 @PathVariable MultipartFile file) throws IOException {
-//        setting file value to null if client side file is not provided to be updated
+                                                                 @RequestPart MultipartFile file) throws IOException {
+//    2 RequestPart Method params - naming should be used same in FrontEnd while sending data and PutMapping-var and PathVariable-var must have same naming
+        //        setting file value to null if client side file is not provided to be updated
         if(file.isEmpty()) file = null;
         CollectionDto collectionDto = convertToCollectionDto(collectionDtoObj);
         return ResponseEntity.ok(collectionService.updateCollection(collectionId, collectionDto, file));
