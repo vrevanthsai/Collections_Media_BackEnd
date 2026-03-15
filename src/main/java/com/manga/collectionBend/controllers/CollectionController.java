@@ -33,6 +33,7 @@ public class CollectionController {
 //    and this is linked with UserEntity class- GrantedAuthority() method which has logged-In user role value
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/add-collection")
+//    Both Method params - naming should be used same in FrontEnd while sending data
     public ResponseEntity<CollectionDto> addCollectionHandler(@RequestPart MultipartFile file,
                                                               @RequestPart String collectionDto) throws IOException, EmptyFileException {
         // it receives json/string data part and image file part from client

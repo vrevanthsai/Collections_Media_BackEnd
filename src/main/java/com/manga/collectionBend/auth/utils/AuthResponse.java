@@ -6,7 +6,8 @@ public class AuthResponse {
     private String accessToken;
     private String refreshToken;
 
-//    User Data fields to send to frontend
+    //    User Data fields to send to frontend
+    private Integer userId;
     private String name;
     private String username;
     private String email;
@@ -14,9 +15,10 @@ public class AuthResponse {
 //        NOTE - TRY TO INCLUDE SOME User data fields also while sending Response from Service to Controller-API to Client(fetching this api)
 
 
-    public AuthResponse(String accessToken, String refreshToken, String name, String username, String email) {
+    public AuthResponse(String accessToken, String refreshToken,Integer userId, String name, String username, String email) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
+        this.userId = userId;
         this.name = name;
         this.username = username;
         this.email = email;
@@ -38,6 +40,14 @@ public class AuthResponse {
 
     public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     public String getName() {
@@ -79,6 +89,7 @@ public class AuthResponse {
 
         private String accessToken;
         private String refreshToken;
+        private Integer userId;
         private String name;
         private String username;
         private String email;
@@ -94,6 +105,11 @@ public class AuthResponse {
 
         public Builder refreshToken(String refreshToken) {
             this.refreshToken = refreshToken;
+            return this;
+        }
+
+        public Builder userId(Integer userId) {
+            this.userId = userId;
             return this;
         }
 
@@ -116,6 +132,7 @@ public class AuthResponse {
             AuthResponse response = new AuthResponse();
             response.accessToken = this.accessToken;
             response.refreshToken = this.refreshToken;
+            response.userId = this.userId;
             response.name = this.name;
             response.username = this.username;
             response.email = this.email;

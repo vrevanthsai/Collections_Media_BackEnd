@@ -58,6 +58,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken.getRefreshToken())
+                .userId(savedUser.getUserId())
                 .name(savedUser.getName())
                 .email(savedUser.getEmail())
                 .username(savedUser.getUniqueUsername()) // sending user-entered username field data - not email
@@ -88,6 +89,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken.getRefreshToken())
+                .userId(user.getUserId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .username(user.getUniqueUsername()) // sending user-entered username field data - not email
