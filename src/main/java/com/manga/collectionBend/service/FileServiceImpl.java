@@ -6,7 +6,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
 @Service
 public class FileServiceImpl implements FileService{
@@ -25,9 +24,11 @@ public class FileServiceImpl implements FileService{
             f.mkdir();
         }
 
-        //copy the file or upload to the path
-//        Files.copy(file.getInputStream(), Paths.get(filePath), StandardCopyOption.REPLACE_EXISTING);
-        Files.copy(file.getInputStream(), Paths.get(filePath));
+        // using in try-with-resources so the file handle is always closed after streaming, so that no file errors comes when updating image 
+        try (InputStream inputStream = file.getInputStream()) {
+            //copy the file or upload to the path
+            Files.copy(inputStream, Paths.get(filePath));
+        }
 
         return fileName;
     }

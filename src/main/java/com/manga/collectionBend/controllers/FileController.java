@@ -38,8 +38,11 @@ public class FileController {
     // fetching file
     @GetMapping("/{fileName}")
     public void serveFileHandler(@PathVariable String fileName, HttpServletResponse response) throws IOException {
-        InputStream resourseFile = fileService.getResourceFile(path, fileName);
         response.setContentType(MediaType.IMAGE_PNG_VALUE);
-        StreamUtils.copy(resourseFile, response.getOutputStream());
+        // using in try-with-resources so the file handle is always closed after streaming, so that no file errors comes when updating image 
+        try (InputStream resourceFile = fileService.getResourceFile(path, fileName)) {
+            // StreamUtils.copy() is used to copy the content of the input stream (resourceFile) to the output stream of the HTTP response (response.getOutputStream()), allowing the file to be sent back to the client as part of the HTTP response.
+            StreamUtils.copy(resourceFile, response.getOutputStream());
+        }
     }
 }

@@ -101,10 +101,12 @@ public class CollectionController {
     @PutMapping("/update/{collectionId}")
     public ResponseEntity<CollectionDto> updateCollectionHandler(@PathVariable Integer collectionId,
                                                                  @RequestPart String collectionDtoObj,
-                                                                 @RequestPart MultipartFile file) throws IOException {
+//                                                                 Make File-part required=false because user can send new img or just null/which uses old img
+                                                                 @RequestPart(required = false) MultipartFile file) throws IOException {
 //    2 RequestPart Method params - naming should be used same in FrontEnd while sending data and PutMapping-var and PathVariable-var must have same naming
         //        setting file value to null if client side file is not provided to be updated
-        if(file.isEmpty()) file = null;
+      // Here - if new file is given then we send that to DB or we take null which means old image-file is there
+        if(file == null || file.isEmpty()) file = null;
         CollectionDto collectionDto = convertToCollectionDto(collectionDtoObj);
         return ResponseEntity.ok(collectionService.updateCollection(collectionId, collectionDto, file));
     }
