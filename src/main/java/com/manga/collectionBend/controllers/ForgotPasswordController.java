@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.Random;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/forgotPassword")
 public class ForgotPasswordController {
 
@@ -63,7 +64,7 @@ public class ForgotPasswordController {
 //        isPresent() checks var has value(returns True) or null(returns False)
 //        if fp has value then it must not be null and FP- expiration var value must be False(not expired)
         if(existingFp.getFpId() != null && !expiration){
-            return new ResponseEntity<>("Already OTP-Email has been sent to your provided mail- check your inbox", HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>("Already OTP-Email has been sent to your provided mail- check your inbox", HttpStatus.PARTIAL_CONTENT);
         }
 
 //        we will delete FP row-data if user asks for new Otp request where already stored old/previous Otp request is already expired
