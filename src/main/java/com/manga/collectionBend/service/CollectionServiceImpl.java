@@ -150,6 +150,36 @@ public class CollectionServiceImpl implements CollectionService{
     }
 
     @Override
+    public List<CollectionDto> getUserBasedCollections(String userId) {
+//        fetch all collection data based UserId provided from DB
+        List<CollectionEntity> collections = collectionRepo.findByUserId(userId);
+
+        List<CollectionDto> collectionDtos = new ArrayList<>();
+
+//        iterate through the list and generate imageURL for each collection obj of retrieved data objects from DB and
+//        map to CollectionDto object
+        for(CollectionEntity collection : collections){
+            String collectionUrl = baseUrl + "/file/" + collection.getImagename();
+            CollectionDto collectionDto = new CollectionDto(
+                    collection.getCollectionId(),
+                    collection.getName(),
+                    collection.getCategory(),
+                    collection.getUserId(),
+                    collection.getRating(),
+                    collection.getReview(),
+                    collection.getProgress(),
+                    collection.getPrivacy(),
+                    collection.getAddedDate(),
+                    collection.getImagename(),
+                    collectionUrl
+            );
+            collectionDtos.add(collectionDto);
+        }
+
+        return collectionDtos;
+    }
+
+    @Override
     public CollectionDto updateCollection(Integer collectionId, CollectionDto collectionDto, MultipartFile file) throws IOException {
 //        check if collection object/record exists with given collectionId or not
         CollectionEntity existingCollection = collectionRepo.findById(collectionId)

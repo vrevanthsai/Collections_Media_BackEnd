@@ -31,7 +31,7 @@ public class CollectionController {
 //    POST API-ADD
 // this is the Syntax for Pre-Authorization- Role-based - Access-Restriction(one of the Security filter) and user's without 'ADMIN' role cant access this API and throws Error(Bad Request)
 //    and this is linked with UserEntity class- GrantedAuthority() method which has logged-In user role value
-    @PreAuthorize("hasAuthority('ADMIN')")
+//    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/add-collection")
 //    Both Method params - naming should be used same in FrontEnd while sending data
     public ResponseEntity<CollectionDto> addCollectionHandler(@RequestPart MultipartFile file,
@@ -72,6 +72,12 @@ public class CollectionController {
         return ResponseEntity.ok(collectionService.getAllCollections());
     }
 
+    //    User-Based GET Api for Collection - which only sends collection data based on UserId provided to FrontEnd-Home page
+    @GetMapping("/userid/{userid}")
+    public ResponseEntity<List<CollectionDto>> getUserBasedCollectionsHandler(@PathVariable String userid){
+        return ResponseEntity.ok(collectionService.getUserBasedCollections(userid));
+    }
+
 //    Get-All collections Api with Pagination logic
     @GetMapping("/allCollectionsPage")
     public ResponseEntity<CollectionPageResponse> getCollectionsPagination(
@@ -85,7 +91,7 @@ public class CollectionController {
         return ResponseEntity.ok(collectionService.getAllCollectionsWithPagination(pageNumber, pageSize));
     };
 
-    //    Get-All collections Api with Pagination logic
+    //    Get-All collections Api with Pagination logic and Sorting logic
     @GetMapping("/allCollectionsPageSort")
     public ResponseEntity<CollectionPageResponse> getCollectionsPaginationAndSorting(
 //            if Client Url does not have Params then we use our own default values

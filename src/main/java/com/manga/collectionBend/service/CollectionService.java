@@ -22,4 +22,6 @@ public interface CollectionService {
 
     CollectionPageResponse getAllCollectionsWithPaginationAndSorting(Integer pageNumber, Integer pageSize,
                                                                      String sortBy, String dir);
+
+    List<CollectionDto> getUserBasedCollections(String userid);
 }
