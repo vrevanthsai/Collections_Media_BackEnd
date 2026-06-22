@@ -2,9 +2,13 @@ package com.manga.collectionBend.entities;
 
 import com.manga.collectionBend.auth.entities.UserEntity;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "categories")
+@Getter
+@Setter
 public class CategoryEntity {
 
     @Id

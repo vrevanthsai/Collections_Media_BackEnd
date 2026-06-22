@@ -6,6 +6,8 @@ import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.auth.utils.AuthResponse;
 import com.manga.collectionBend.auth.utils.LoginRequest;
 import com.manga.collectionBend.auth.utils.RegisterRequest;
+import com.manga.collectionBend.entities.CategoryEntity;
+import com.manga.collectionBend.repositories.CategoryRepo;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,14 +22,16 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final AuthenticationManager authenticationManager;
+    private final CategoryRepo categoryRepo;
 
 //  Constructor Dependency Injection
-    public AuthService(PasswordEncoder passwordEncoder, UserRepo userRepo, JwtService jwtService, RefreshTokenService refreshTokenService, AuthenticationManager authenticationManager) {
+    public AuthService(PasswordEncoder passwordEncoder, UserRepo userRepo, JwtService jwtService, RefreshTokenService refreshTokenService, AuthenticationManager authenticationManager, CategoryRepo categoryRepo) {
         this.passwordEncoder = passwordEncoder;
         this.userRepo = userRepo;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
         this.authenticationManager = authenticationManager;
+        this.categoryRepo = categoryRepo;
     }
 
 //    Register Api service Method
@@ -46,8 +50,28 @@ public class AuthService {
         //        Todo- Add Validation logic which prevents Users from creating/registering Accounts with same email-id or
         //         already existing Email-id from DB and send Custom Error msg
 
+//        Validation of user selected Categories initially while registering and min of 3 required
+        if(registerRequest.getSelectedCategories() == null
+                || registerRequest.getSelectedCategories().size() < 3) {
+
+            throw new RuntimeException(
+                    "Please select at least 3 categories"
+            );
+        }
+
 //        Saving the Stored-Object into UserTable
         UserEntity savedUser = userRepo.save(user);
+
+//        Save Categories After User Registration
+        for(String categoryName : registerRequest.getSelectedCategories()) {
+
+            CategoryEntity category = new CategoryEntity();
+
+            category.setCategoryName(categoryName);
+            category.setUser(savedUser);
+
+            categoryRepo.save(category);
+        }
 
 //        generating Jwt Access token and RefreshToken after successfully saving data
         var accessToken = jwtService.generateToken(savedUser);
