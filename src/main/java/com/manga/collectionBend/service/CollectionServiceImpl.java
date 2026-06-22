@@ -1,5 +1,7 @@
 package com.manga.collectionBend.service;
 
+import com.manga.collectionBend.auth.entities.UserEntity;
+import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.dto.CollectionDto;
 import com.manga.collectionBend.dto.CollectionPageResponse;
 import com.manga.collectionBend.entities.CollectionEntity;
@@ -24,6 +26,7 @@ import java.util.List;
 @Service
 public class CollectionServiceImpl implements CollectionService{
 
+    private final UserRepo userRepo;
     private final CollectionRepo collectionRepo;
     private final FileService fileService;
 
@@ -33,7 +36,8 @@ public class CollectionServiceImpl implements CollectionService{
     @Value("${base.url}")
     private String baseUrl;
 
-    public CollectionServiceImpl(CollectionRepo collectionRepo, FileService fileService) {
+    public CollectionServiceImpl(UserRepo userRepo, CollectionRepo collectionRepo, FileService fileService) {
+        this.userRepo = userRepo;
         this.collectionRepo = collectionRepo;
         this.fileService = fileService;
     }
@@ -152,7 +156,8 @@ public class CollectionServiceImpl implements CollectionService{
     @Override
     public List<CollectionDto> getUserBasedCollections(String userId) {
 //        fetch all collection data based UserId provided from DB
-        List<CollectionEntity> collections = collectionRepo.findByUserId(userId);
+        UserEntity user = userRepo.findById(Integer.parseInt(userId)).get();
+        List<CollectionEntity> collections = collectionRepo.findByUserId(user);
 
         List<CollectionDto> collectionDtos = new ArrayList<>();
 

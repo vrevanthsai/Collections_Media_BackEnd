@@ -1,19 +1,16 @@
 package com.manga.collectionBend.dto;
 
-import jakarta.persistence.Column;
+import com.manga.collectionBend.auth.entities.UserEntity;
+import com.manga.collectionBend.entities.CategoryEntity;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.Date;
 
 @Data
 //@NoArgsConstructor
 //@AllArgsConstructor
 public class CollectionDto {
 
-    public CollectionDto(Integer collectionId, String name, String category, String userId, Integer rating, String review, String progress, String privacy, String addedDate, String imagename, String imageUrl) {
+    public CollectionDto(Integer collectionId, String name, @NotBlank CategoryEntity category, @NotBlank UserEntity userId, Integer rating, String review, String progress, String privacy, String addedDate, String imagename, String imageUrl) {
         this.collectionId = collectionId;
         this.name = name;
         this.category = category;
@@ -36,10 +33,10 @@ public class CollectionDto {
     private String name;
 
     @NotBlank(message = "Please provide collection's category")
-    private String category;
+    private CategoryEntity category;
 
     @NotBlank(message = "Please provide userId")
-    private String userId;
+    private UserEntity userId;
 
     @NotBlank(message = "Please provide collection's rating")
     private Integer rating;
@@ -79,19 +76,19 @@ public class CollectionDto {
         this.name = name;
     }
 
-    public String getCategory() {
+    public CategoryEntity getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(CategoryEntity category) {
         this.category = category;
     }
 
-    public String getUserId() {
+    public UserEntity getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(UserEntity userId) {
         this.userId = userId;
     }
 
