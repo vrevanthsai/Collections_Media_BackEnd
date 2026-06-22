@@ -32,7 +32,7 @@ public class SecurityConfig {
                  .cors(cors -> {})   // new recommended style- to Enable CORS from Frontend when using SpringSecurity with JWT and add its @CrossOrigin in its controller files
                  .csrf(AbstractHttpConfigurer::disable) // to disable csrf
                  .authorizeHttpRequests(auth -> auth
-                         .requestMatchers("/api/v1/auth/**", "/forgotPassword/**") // this is the Base(starting) Path of all auth-APIs like login/register etc and another forgotPassword path
+                         .requestMatchers("/api/v1/auth/**", "/forgotPassword/**", "/api/categories/default") // this is the Base(starting) Path of all auth-APIs like login/register etc and another forgotPassword path
                          .permitAll() // allows the apis which has auth base apis(can access apis without credentials)
                          .anyRequest() // apis which are not from auth base path ,that apis are blocked and asks for authentication
                          .authenticated())
