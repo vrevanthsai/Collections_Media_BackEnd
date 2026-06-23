@@ -1,12 +1,10 @@
 package com.manga.collectionBend.controllers;
 
 import com.manga.collectionBend.dto.CategoryDto;
+import com.manga.collectionBend.dto.CategoryResponse;
 import com.manga.collectionBend.service.CategoryService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -27,5 +25,14 @@ public class CategoryController {
         return ResponseEntity.ok(
                 categoryService.getDefaultCategories()
         );
+    }
+
+//    Get Categories data based on used id and send array-objects to frontend with category_id and category_name
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<CategoryResponse>> getCategoriesByUser(
+            @PathVariable Integer userId) {
+
+        return ResponseEntity.ok(
+                categoryService.getCategoriesByUser(userId));
     }
 }
