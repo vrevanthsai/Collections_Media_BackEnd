@@ -4,9 +4,11 @@ import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.dto.CollectionDto;
 import com.manga.collectionBend.dto.CollectionPageResponse;
+import com.manga.collectionBend.entities.CategoryEntity;
 import com.manga.collectionBend.entities.CollectionEntity;
 import com.manga.collectionBend.exceptions.CollectionNotFoundExpception;
 import com.manga.collectionBend.exceptions.FileExistsException;
+import com.manga.collectionBend.repositories.CategoryRepo;
 import com.manga.collectionBend.repositories.CollectionRepo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -29,6 +31,7 @@ public class CollectionServiceImpl implements CollectionService{
     private final UserRepo userRepo;
     private final CollectionRepo collectionRepo;
     private final FileService fileService;
+    private final CategoryRepo categoryRepo;
 
     @Value("${project.collectionImage}")
     private String path;
@@ -36,10 +39,11 @@ public class CollectionServiceImpl implements CollectionService{
     @Value("${base.url}")
     private String baseUrl;
 
-    public CollectionServiceImpl(UserRepo userRepo, CollectionRepo collectionRepo, FileService fileService) {
+    public CollectionServiceImpl(UserRepo userRepo, CollectionRepo collectionRepo, FileService fileService, CategoryRepo categoryRepo) {
         this.userRepo = userRepo;
         this.collectionRepo = collectionRepo;
         this.fileService = fileService;
+        this.categoryRepo = categoryRepo;
     }
 
     @Override
@@ -60,8 +64,8 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionEntity collection = new CollectionEntity(
                 null, // id should be null for saving because we're already using autoGeneration Ids in entity file for ID
                 collectionDto.getName(),
-                collectionDto.getCategory(),
-                collectionDto.getUserId(),
+                null, // value will be added below
+                null,
                 collectionDto.getRating(),
                 collectionDto.getReview(),
                 collectionDto.getProgress(),
@@ -69,6 +73,15 @@ public class CollectionServiceImpl implements CollectionService{
                 collectionDto.getAddedDate(),
                 collectionDto.getImagename()
         );
+//        to add userReference data into Collection table- not userId-Integer
+        UserEntity user = userRepo.findById(collectionDto.getUserId())
+                .orElseThrow();
+//      same reason as above
+        CategoryEntity category = categoryRepo.findById(collectionDto.getCategory())
+                .orElseThrow();
+//      adding other tabless references and saving them into Collection table record
+        collection.setUserId(user);
+        collection.setCategory(category);
 
 //        save the collection entity object to DB using repo methods
 //        save() - saves new primaryId as new record in table if it does not exist
@@ -82,8 +95,8 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionDto response = new CollectionDto(
             savedCollection.getCollectionId(),
                 savedCollection.getName(),
-                savedCollection.getCategory(),
-                savedCollection.getUserId(),
+                savedCollection.getCategory().getCategoryId(), // Collection table has - Category table reference - inside that we get Category id field
+                savedCollection.getUserId().getUserId(),
                 savedCollection.getRating(),
                 savedCollection.getReview(),
                 savedCollection.getProgress(),
@@ -92,6 +105,8 @@ public class CollectionServiceImpl implements CollectionService{
                 savedCollection.getImagename(),
                 collectionUrl
         );
+//        to send new field to frontend
+        response.setCategoryName(collection.getCategory().getCategoryName());
 
         return response;
     }
@@ -109,8 +124,8 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionDto response = new CollectionDto(
                 collection.getCollectionId(),
                 collection.getName(),
-                collection.getCategory(),
-                collection.getUserId(),
+                collection.getCategory().getCategoryId(),
+                collection.getUserId().getUserId(),
                 collection.getRating(),
                 collection.getReview(),
                 collection.getProgress(),
@@ -119,6 +134,7 @@ public class CollectionServiceImpl implements CollectionService{
                 collection.getImagename(),
                 collectionUrl
         );
+        response.setCategoryName(collection.getCategory().getCategoryName());
 
         return response;
     }
@@ -137,8 +153,8 @@ public class CollectionServiceImpl implements CollectionService{
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
                     collection.getName(),
-                    collection.getCategory(),
-                    collection.getUserId(),
+                    collection.getCategory().getCategoryId(),
+                    collection.getUserId().getUserId(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
@@ -147,6 +163,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
+            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
             collectionDtos.add(collectionDto);
         }
 
@@ -168,8 +185,8 @@ public class CollectionServiceImpl implements CollectionService{
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
                     collection.getName(),
-                    collection.getCategory(),
-                    collection.getUserId(),
+                    collection.getCategory().getCategoryId(),
+                    collection.getUserId().getUserId(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
@@ -178,6 +195,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
+            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
             collectionDtos.add(collectionDto);
         }
 
@@ -208,8 +226,8 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionEntity collection = new CollectionEntity(
                 existingCollection.getCollectionId(), // providing id which will update this ID's record in table
                 collectionDto.getName(),
-                collectionDto.getCategory(),
-                collectionDto.getUserId(),
+                null,
+                null,
                 collectionDto.getRating(),
                 collectionDto.getReview(),
                 collectionDto.getProgress(),
@@ -217,6 +235,15 @@ public class CollectionServiceImpl implements CollectionService{
                 collectionDto.getAddedDate(),
                 collectionDto.getImagename()
         );
+
+        UserEntity user = userRepo.findById(collectionDto.getUserId())
+                .orElseThrow();
+
+        CategoryEntity category = categoryRepo.findById(collectionDto.getCategory())
+                .orElseThrow();
+
+        collection.setUserId(user);
+        collection.setCategory(category);
 
 //        save the updated collection object, it returns saved/updated collection object
         // save()- will update the record where collection(entity object) has ID in it.
@@ -229,8 +256,8 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionDto response = new CollectionDto(
                 collection.getCollectionId(),
                 collection.getName(),
-                collection.getCategory(),
-                collection.getUserId(),
+                collection.getCategory().getCategoryId(),
+                collection.getUserId().getUserId(),
                 collection.getRating(),
                 collection.getReview(),
                 collection.getProgress(),
@@ -239,6 +266,7 @@ public class CollectionServiceImpl implements CollectionService{
                 collection.getImagename(),
                 collectionUrl
         );
+        response.setCategoryName(collection.getCategory().getCategoryName());
 
         return response;
     }
@@ -282,8 +310,8 @@ public class CollectionServiceImpl implements CollectionService{
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
                     collection.getName(),
-                    collection.getCategory(),
-                    collection.getUserId(),
+                    collection.getCategory().getCategoryId(),
+                    collection.getUserId().getUserId(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
@@ -292,6 +320,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
+            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
 //            we convert entity data to DTO object and send that DTO only to controller, not direct entity object
             collectionDtos.add(collectionDto);
         }
@@ -333,8 +362,8 @@ public class CollectionServiceImpl implements CollectionService{
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
                     collection.getName(),
-                    collection.getCategory(),
-                    collection.getUserId(),
+                    collection.getCategory().getCategoryId(),
+                    collection.getUserId().getUserId(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
@@ -343,6 +372,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
+            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
 //            we convert entity data to DTO object and send that DTO only to controller, not direct entity object
             collectionDtos.add(collectionDto);
         }

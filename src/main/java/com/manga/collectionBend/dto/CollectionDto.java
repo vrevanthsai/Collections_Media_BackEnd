@@ -10,7 +10,7 @@ import lombok.Data;
 //@AllArgsConstructor
 public class CollectionDto {
 
-    public CollectionDto(Integer collectionId, String name, @NotBlank CategoryEntity category, @NotBlank UserEntity userId, Integer rating, String review, String progress, String privacy, String addedDate, String imagename, String imageUrl) {
+    public CollectionDto(Integer collectionId, String name, Integer category, Integer userId, Integer rating, String review, String progress, String privacy, String addedDate, String imagename, String imageUrl) {
         this.collectionId = collectionId;
         this.name = name;
         this.category = category;
@@ -33,10 +33,13 @@ public class CollectionDto {
     private String name;
 
     @NotBlank(message = "Please provide collection's category")
-    private CategoryEntity category;
+    private Integer category;
+
+    // Used for GET responses- used in Collection-GET apis to send categoryName instead of categoryId to frontend
+    private String categoryName;
 
     @NotBlank(message = "Please provide userId")
-    private UserEntity userId;
+    private Integer userId;
 
     @NotBlank(message = "Please provide collection's rating")
     private Integer rating;
@@ -76,20 +79,28 @@ public class CollectionDto {
         this.name = name;
     }
 
-    public CategoryEntity getCategory() {
+    public Integer getCategory() {
         return category;
     }
 
-    public void setCategory(CategoryEntity category) {
-        this.category = category;
+    public void setCategory(Integer categoryId) {
+        this.category = categoryId;
     }
 
-    public UserEntity getUserId() {
+    public Integer getUserId() {
         return userId;
     }
 
-    public void setUserId(UserEntity userId) {
+    public void setUserId(Integer userId) {
         this.userId = userId;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
     }
 
     public Integer getRating() {
