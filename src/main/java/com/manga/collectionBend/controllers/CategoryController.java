@@ -1,6 +1,7 @@
 package com.manga.collectionBend.controllers;
 
 import com.manga.collectionBend.dto.CategoryDto;
+import com.manga.collectionBend.dto.CategoryRequest;
 import com.manga.collectionBend.dto.CategoryResponse;
 import com.manga.collectionBend.service.CategoryService;
 import org.springframework.http.ResponseEntity;
@@ -34,5 +35,22 @@ public class CategoryController {
 
         return ResponseEntity.ok(
                 categoryService.getCategoriesByUser(userId));
+    }
+
+//    POST-Api - Add category
+    @PostMapping("/add-category")
+//    if only Json/one part is being sent from frontend then we can use @RequestBody and if we have more then 2 parts - we use @RequestPart for receiving data from frontend Api call
+    public ResponseEntity<CategoryResponse> addCategoryHandler(@RequestBody CategoryRequest categoryRequest) {
+        return ResponseEntity.ok(
+                categoryService.addCategoryHandler(categoryRequest)
+        );
+    }
+
+//    Update-Api category
+    @PutMapping("/update/{categoryId}")
+    public ResponseEntity<CategoryResponse> updateCategoryHandler(@PathVariable Integer categoryId, @RequestBody CategoryRequest categoryRequest) {
+        return ResponseEntity.ok(
+                categoryService.updateCategoryHandler(categoryId, categoryRequest)
+        );
     }
 }
