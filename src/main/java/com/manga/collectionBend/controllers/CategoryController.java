@@ -1,5 +1,6 @@
 package com.manga.collectionBend.controllers;
 
+import com.manga.collectionBend.dto.CategoryDeleteResponse;
 import com.manga.collectionBend.dto.CategoryDto;
 import com.manga.collectionBend.dto.CategoryRequest;
 import com.manga.collectionBend.dto.CategoryResponse;
@@ -47,10 +48,18 @@ public class CategoryController {
     }
 
 //    Update-Api category
-    @PutMapping("/update/{categoryId}")
+    @PutMapping("/update-category/{categoryId}")
     public ResponseEntity<CategoryResponse> updateCategoryHandler(@PathVariable Integer categoryId, @RequestBody CategoryRequest categoryRequest) {
         return ResponseEntity.ok(
                 categoryService.updateCategoryHandler(categoryId, categoryRequest)
+        );
+    }
+
+//    Delete-Api category
+    @DeleteMapping("/delete-category/{categoryId}")
+    public ResponseEntity<CategoryDeleteResponse> deleteCategoryHandler(@PathVariable Integer categoryId) {
+        return ResponseEntity.ok(
+                categoryService.deleteCategoryHandler(categoryId)
         );
     }
 }

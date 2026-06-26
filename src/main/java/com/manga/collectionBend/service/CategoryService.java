@@ -2,12 +2,14 @@ package com.manga.collectionBend.service;
 
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.UserRepo;
+import com.manga.collectionBend.dto.CategoryDeleteResponse;
 import com.manga.collectionBend.dto.CategoryDto;
 import com.manga.collectionBend.dto.CategoryRequest;
 import com.manga.collectionBend.dto.CategoryResponse;
 import com.manga.collectionBend.entities.CategoryEntity;
-import com.manga.collectionBend.exceptions.CollectionNotFoundExpception;
+import com.manga.collectionBend.entities.CollectionEntity;
 import com.manga.collectionBend.repositories.CategoryRepo;
+import com.manga.collectionBend.repositories.CollectionRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,7 @@ public class CategoryService {
     private final CategoryRepo categoryRepo;
     @Autowired
     private UserRepo userRepo;
+    private final CollectionRepo collectionRepo;
 
 //    Default categories data or Admin can later edit them either manually or by using Post-Api
     private static final List<String> DEFAULT_CATEGORIES = List.of(
@@ -29,8 +32,9 @@ public class CategoryService {
             "Games"
     );
 
-    public CategoryService(CategoryRepo categoryRepo) {
+    public CategoryService(CategoryRepo categoryRepo, CollectionRepo collectionRepo) {
         this.categoryRepo = categoryRepo;
+        this.collectionRepo = collectionRepo;
     }
 
     public List<CategoryDto> getDefaultCategories() {
@@ -92,5 +96,34 @@ public class CategoryService {
         dto.setCategoryId(updatedCategory.getCategoryId());
         dto.setCategoryName(updatedCategory.getCategoryName());
         return dto;
+    }
+
+    public CategoryDeleteResponse deleteCategoryHandler(Integer categoryId) {
+        //       Validation check - get Category data based on provided category-id
+        CategoryEntity existingCategory = categoryRepo.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found with id = " + categoryId));
+
+        String categoryName = existingCategory.getCategoryName();
+//        Logic to prevent Category Deletion if that category has some created collections which are linked/mapped to this wanted category
+//        here when Category-record/row will act like parent record which is referred by foreign-key in a Collection-record/row(child) -
+//        so delection of parent record(category) will not work until its referred child record in Collection table is deleted first then only deletion of category-record will work next
+        List<CollectionEntity> categoryBasedCollections = collectionRepo.findByCategory(existingCategory);
+
+        if(categoryBasedCollections.isEmpty()){
+            categoryRepo.delete(existingCategory);
+            CategoryDeleteResponse categoryDeleteResponse = new CategoryDeleteResponse();
+            categoryDeleteResponse.setSuccess(Boolean.TRUE);
+            categoryDeleteResponse.setMessage("Category deleted successfully with name = " + categoryName);
+            return categoryDeleteResponse;
+        } else {
+            CategoryDeleteResponse categoryDeleteResponse = new CategoryDeleteResponse();
+            categoryDeleteResponse.setSuccess(Boolean.FALSE);
+            categoryDeleteResponse.setMessage(
+                    "This " + categoryName + " Category has "+ categoryBasedCollections.toArray().length
+                            +" collections created with it, so until the collections linked to this Category are deleted, we can't delete it, please delete them all first and come back to delete this category next!!!"
+                            +"Tip- you can find the linked collections of a Category in Home page where you use the filters options of category and find all the linked collections of a Category in Home page."
+            );
+            return categoryDeleteResponse;
+        }
     }
 }
