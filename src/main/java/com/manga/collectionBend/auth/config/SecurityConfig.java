@@ -1,6 +1,7 @@
 package com.manga.collectionBend.auth.config;
 
 import com.manga.collectionBend.auth.services.AuthFilterService;
+import com.manga.collectionBend.auth.services.UserIdValidationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -19,10 +20,12 @@ public class SecurityConfig {
 
     private final AuthFilterService authFilterService;
     private final AuthenticationProvider authenticationProvider;
+    private final UserIdValidationFilter userIdValidationFilter;
 
-    public SecurityConfig(AuthFilterService authFilterService, AuthenticationProvider authenticationProvider) {
+    public SecurityConfig(AuthFilterService authFilterService, AuthenticationProvider authenticationProvider, UserIdValidationFilter userIdValidationFilter) {
         this.authFilterService = authFilterService;
         this.authenticationProvider = authenticationProvider;
+        this.userIdValidationFilter = userIdValidationFilter;
     }
 
     @Bean
@@ -39,7 +42,8 @@ public class SecurityConfig {
                  .sessionManagement(session -> session
                          .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // making session as STATELESS because we are not using session in our security
                  .authenticationProvider(authenticationProvider)
-                 .addFilterBefore(authFilterService, UsernamePasswordAuthenticationFilter.class); // linking our FilterService with main flow and using a Filter-Strategy
+                 .addFilterBefore(authFilterService, UsernamePasswordAuthenticationFilter.class) // linking our FilterService with main flow and using a Filter-Strategy
+                 .addFilterAfter(userIdValidationFilter, AuthFilterService.class); // linking Extra UserId Validation filter to prevent attackers/users to access other user's data
 
         return http.build(); // returning the Main FilterChain flow instead of using default flow
     }
