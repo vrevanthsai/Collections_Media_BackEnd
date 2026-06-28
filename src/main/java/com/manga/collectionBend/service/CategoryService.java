@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class CategoryService {
@@ -83,19 +84,26 @@ public class CategoryService {
         CategoryEntity existingCategory = categoryRepo.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found with id = " + categoryId));
 
-        CategoryEntity categoryEntity = new CategoryEntity();
+//        UserId Validation check- to see if same user is trying to update his data or some one
+//        if same - we update or not same - we throw error
+        if(Objects.equals(categoryRequest.getUserId(), existingCategory.getUser().getUserId())) {
+            CategoryEntity categoryEntity = new CategoryEntity();
 //            setting values to new entity object which has updated categoryName value and remaining 2 field - id and User values will be same as previous/existing category record-data
-        categoryEntity.setCategoryId(existingCategory.getCategoryId()); // providing id which will update this ID's record in table
-        categoryEntity.setCategoryName(categoryRequest.getCategoryName()); // new updated value
-        categoryEntity.setUser(existingCategory.getUser()); // old value
+            categoryEntity.setCategoryId(existingCategory.getCategoryId()); // providing id which will update this ID's record in table
+            categoryEntity.setCategoryName(categoryRequest.getCategoryName()); // new updated value
+            categoryEntity.setUser(existingCategory.getUser()); // old value
 
 //        save the updated data into category table
-        CategoryEntity updatedCategory = categoryRepo.save(categoryEntity);
+            CategoryEntity updatedCategory = categoryRepo.save(categoryEntity);
 
-        CategoryResponse dto = new CategoryResponse();
-        dto.setCategoryId(updatedCategory.getCategoryId());
-        dto.setCategoryName(updatedCategory.getCategoryName());
-        return dto;
+            CategoryResponse dto = new CategoryResponse();
+            dto.setCategoryId(updatedCategory.getCategoryId());
+            dto.setCategoryName(updatedCategory.getCategoryName());
+            return dto;
+        } else {
+            System.out.println("Error - provided UserId is not matching with existing category Id, hence not updating any data!!!");
+            return new CategoryResponse();
+        }
     }
 
     public CategoryDeleteResponse deleteCategoryHandler(Integer categoryId) {
