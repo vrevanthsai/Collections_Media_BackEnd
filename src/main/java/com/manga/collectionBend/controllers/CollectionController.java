@@ -18,7 +18,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/api/v1/collection")
+@RequestMapping("/api/v1/user/{userId}/collection")
 public class CollectionController {
 
     private final CollectionService collectionService;
@@ -73,9 +73,31 @@ public class CollectionController {
     }
 
     //    User-Based GET Api for Collection - which only sends collection data based on UserId provided to FrontEnd-Home page
-    @GetMapping("/userid/{userid}")
-    public ResponseEntity<List<CollectionDto>> getUserBasedCollectionsHandler(@PathVariable String userid){
-        return ResponseEntity.ok(collectionService.getUserBasedCollections(userid));
+    //    userId param value is linked in above parent RequestMapping() and it will be used in PathVariable- where both vars name are same
+    @GetMapping("/get-user-collections")
+    public ResponseEntity<List<CollectionDto>> getUserBasedCollectionsHandler(@PathVariable Integer userId){
+        return ResponseEntity.ok(collectionService.getUserBasedCollections(userId));
+    }
+
+    //    PUT-UPDATE API
+    @PutMapping("/update/{collectionId}")
+    public ResponseEntity<CollectionDto> updateCollectionHandler(@PathVariable Integer collectionId,
+                                                                 @RequestPart String collectionDtoObj,
+//                                                                 Make File-part required=false because user can send new img or just null/which uses old img
+                                                                 @RequestPart(required = false) MultipartFile file) throws IOException {
+//    2 RequestPart Method params - naming should be used same in FrontEnd while sending data and PutMapping-var and PathVariable-var must have same naming
+        //        setting file value to null if client side file is not provided to be updated
+        // Here - if new file is given then we send that to DB or we take null which means old image-file is there
+        if(file == null || file.isEmpty()) file = null;
+        CollectionDto collectionDto = convertToCollectionDto(collectionDtoObj);
+        return ResponseEntity.ok(collectionService.updateCollection(collectionId, collectionDto, file));
+    }
+
+    //    DELETE-API
+    @DeleteMapping("/delete/{collectionId}")
+//    we should give Type-String because it returns string in service method
+    public ResponseEntity<String> deleteCollectionHandler(@PathVariable Integer collectionId) throws IOException {
+        return ResponseEntity.ok(collectionService.deleteCollection(collectionId));
     }
 
 //    Get-All collections Api with Pagination logic
@@ -102,26 +124,5 @@ public class CollectionController {
     ){
         return ResponseEntity.ok(collectionService.getAllCollectionsWithPaginationAndSorting(pageNumber, pageSize, sortBy, dir));
     };
-
-//    PUT-UPDATE API
-    @PutMapping("/update/{collectionId}")
-    public ResponseEntity<CollectionDto> updateCollectionHandler(@PathVariable Integer collectionId,
-                                                                 @RequestPart String collectionDtoObj,
-//                                                                 Make File-part required=false because user can send new img or just null/which uses old img
-                                                                 @RequestPart(required = false) MultipartFile file) throws IOException {
-//    2 RequestPart Method params - naming should be used same in FrontEnd while sending data and PutMapping-var and PathVariable-var must have same naming
-        //        setting file value to null if client side file is not provided to be updated
-      // Here - if new file is given then we send that to DB or we take null which means old image-file is there
-        if(file == null || file.isEmpty()) file = null;
-        CollectionDto collectionDto = convertToCollectionDto(collectionDtoObj);
-        return ResponseEntity.ok(collectionService.updateCollection(collectionId, collectionDto, file));
-    }
-
-//    DELETE-API
-    @DeleteMapping("/delete/{collectionId}")
-//    we should give Type-String because it returns string in service method
-    public ResponseEntity<String> deleteCollectionHandler(@PathVariable Integer collectionId) throws IOException {
-        return ResponseEntity.ok(collectionService.deleteCollection(collectionId));
-    }
 
 }

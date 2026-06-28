@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/api/categories")
+@RequestMapping("/api/v1/user/{userId}/categories")
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -21,16 +21,9 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-//    this Api endpoint does not require security- so excluded it in SecurityConfig
-    @GetMapping("/default")
-    public ResponseEntity<List<CategoryDto>> getDefaultCategories() {
-        return ResponseEntity.ok(
-                categoryService.getDefaultCategories()
-        );
-    }
-
 //    Get Categories data based on used id and send array-objects to frontend with category_id and category_name
-    @GetMapping("/user/{userId}")
+    @GetMapping("/get-user-categories")
+//    userId param value is linked in above parent RequestMapping() and it will be used in PathVariable- where both vars name are same
     public ResponseEntity<List<CategoryResponse>> getCategoriesByUser(
             @PathVariable Integer userId) {
 

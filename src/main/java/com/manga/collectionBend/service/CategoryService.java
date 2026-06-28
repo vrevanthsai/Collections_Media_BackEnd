@@ -121,7 +121,8 @@ public class CategoryService {
             categoryDeleteResponse.setMessage(
                     "This " + categoryName + " Category has "+ categoryBasedCollections.toArray().length
                             +" collections created with it, so until the collections linked to this Category are deleted, we can't delete it, please delete them all first and come back to delete this category next!!!"
-                            +"Tip- you can find the linked collections of a Category in Home page where you use the filters options of category and find all the linked collections of a Category in Home page."
+                            +"Tip- 1) you can find the linked collections of a Category in Home page where you use the filters options of category and find all the linked collections of a Category in Home page or"
+                            +" 2) you can use Edit option to change the category name instead of deleting it."
             );
             return categoryDeleteResponse;
         }

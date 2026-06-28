@@ -23,7 +23,7 @@ public class UserIdValidationFilter extends OncePerRequestFilter {
     }
 
     private static final List<String> EXEMPT_PATTERNS = List.of(
-            "/api/v1/auth/", "/forgotPassword/", "/api/categories/default"
+            "/api/v1/auth/", "/forgotPassword/"
     );
 
     @Override

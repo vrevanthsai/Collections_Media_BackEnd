@@ -10,8 +10,12 @@ import com.manga.collectionBend.auth.utils.AuthResponse;
 import com.manga.collectionBend.auth.utils.LoginRequest;
 import com.manga.collectionBend.auth.utils.RefreshTokenRequest;
 import com.manga.collectionBend.auth.utils.RegisterRequest;
+import com.manga.collectionBend.dto.CategoryDto;
+import com.manga.collectionBend.service.CategoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 // this file contains all Auth-APIs endpoints
 @RestController
@@ -22,11 +26,13 @@ public class AuthController {
     private final AuthService authService;
     private final RefreshTokenService refreshTokenService;
     private final JwtService jwtService;
+    private final CategoryService categoryService;
 
-    public AuthController(AuthService authService, RefreshTokenService refreshTokenService, JwtService jwtService) {
+    public AuthController(AuthService authService, RefreshTokenService refreshTokenService, JwtService jwtService, CategoryService categoryService) {
         this.authService = authService;
         this.refreshTokenService = refreshTokenService;
         this.jwtService = jwtService;
+        this.categoryService = categoryService;
     }
 
 //    Register API
@@ -56,6 +62,15 @@ public class AuthController {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken.getRefreshToken()) // sending provided verified refreshToken - not new one
                 .build()
+        );
+    }
+
+    //    this Api endpoint does not require security- so excluded it in SecurityConfig
+//    added this Category Api - here because it does not require any Security filters and is used in /register form in forntend
+    @GetMapping("/get-default-categories")
+    public ResponseEntity<List<CategoryDto>> getDefaultCategories() {
+        return ResponseEntity.ok(
+                categoryService.getDefaultCategories()
         );
     }
 }

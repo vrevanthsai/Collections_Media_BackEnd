@@ -171,9 +171,9 @@ public class CollectionServiceImpl implements CollectionService{
     }
 
     @Override
-    public List<CollectionDto> getUserBasedCollections(String userId) {
+    public List<CollectionDto> getUserBasedCollections(Integer userId) {
 //        fetch all collection data based UserId provided from DB
-        UserEntity user = userRepo.findById(Integer.parseInt(userId)).get();
+        UserEntity user = userRepo.findById(userId).get();
         List<CollectionEntity> collections = collectionRepo.findByUserId(user);
 
         List<CollectionDto> collectionDtos = new ArrayList<>();
