@@ -2,6 +2,7 @@ package com.manga.collectionBend.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.manga.collectionBend.dto.ApiResponse;
 import com.manga.collectionBend.dto.CollectionDto;
 import com.manga.collectionBend.dto.CollectionPageResponse;
 import com.manga.collectionBend.exceptions.EmptyFileException;
@@ -34,8 +35,8 @@ public class CollectionController {
 //    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/add-collection")
 //    Both Method params - naming should be used same in FrontEnd while sending data
-    public ResponseEntity<CollectionDto> addCollectionHandler(@RequestPart MultipartFile file,
-                                                              @RequestPart String collectionDto) throws IOException, EmptyFileException {
+    public ResponseEntity<ApiResponse<CollectionDto>> addCollectionHandler(@RequestPart MultipartFile file,
+                                                                           @RequestPart String collectionDto) throws IOException, EmptyFileException {
         // it receives json/string data part and image file part from client
         // collectionDto Type will be String if it comes from FormData and,
         // it will be direct json(CollectionDto- where springboot will convert automatically from json to DTO object) if it is raw data from PostMan
@@ -47,8 +48,14 @@ public class CollectionController {
         }
 
         CollectionDto dto = convertToCollectionDto(collectionDto);
-//        HttpStatus.CREATED may bt 200/202 status code
-        return new ResponseEntity<>(collectionService.addCollection(dto,file), HttpStatus.CREATED);
+        ApiResponse<CollectionDto> response = collectionService.addCollection(dto,file);
+        //        send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+
+//        send success=true, with CollectionDto data object when no errors are there
+        return ResponseEntity.ok(response);
     };
 
     private CollectionDto convertToCollectionDto(String collectionDtoObj) throws JsonProcessingException {

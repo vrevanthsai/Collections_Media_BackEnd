@@ -2,10 +2,7 @@ package com.manga.collectionBend.service;
 
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.UserRepo;
-import com.manga.collectionBend.dto.CategoryDeleteResponse;
-import com.manga.collectionBend.dto.CategoryDto;
-import com.manga.collectionBend.dto.CategoryRequest;
-import com.manga.collectionBend.dto.CategoryResponse;
+import com.manga.collectionBend.dto.*;
 import com.manga.collectionBend.entities.CategoryEntity;
 import com.manga.collectionBend.entities.CollectionEntity;
 import com.manga.collectionBend.repositories.CategoryRepo;
@@ -57,26 +54,37 @@ public class CategoryService {
                 .toList();
     }
 
-    public CategoryResponse addCategoryHandler(CategoryRequest categoryRequest) {
+    public ApiResponse<CategoryResponse> addCategoryHandler(CategoryRequest categoryRequest) {
 //        get userId from requestBody from frontend
         Integer userId = categoryRequest.getUserId();
 //        based on userId value- get UserEntity reference data to link it/store it in Category table-column
         UserEntity user = userRepo.findById(userId).orElse(null);
-        if (user != null) {
-            CategoryEntity categoryEntity = new CategoryEntity();
-            categoryEntity.setCategoryName(categoryRequest.getCategoryName());
-            categoryEntity.setUser(user);
-//            save the data
-            CategoryEntity savedCategory = categoryRepo.save(categoryEntity);
-//            return sample data after saving
-            CategoryResponse dto = new CategoryResponse();
-            dto.setCategoryId(savedCategory.getCategoryId());
-            dto.setCategoryName(savedCategory.getCategoryName());
-            return dto;
-        } else {
-//            return empty object if user data not found with given userId from frontend
-            return new CategoryResponse();
+
+        if (user == null) {
+            return ApiResponse.error("User not found with ID: " + userId);
         }
+
+        List<CategoryEntity> categories = categoryRepo.findByUserUserId(userId);
+
+        // Check for duplicate category name (case-insensitive) to prevent duplicate data creations
+        boolean isDuplicate = categories.stream()
+                .anyMatch(category -> category.getCategoryName()
+                        .equalsIgnoreCase(categoryRequest.getCategoryName().trim()));
+
+        if (isDuplicate) {
+            return ApiResponse.error("Category '" + categoryRequest.getCategoryName() + "' already exists.");
+        }
+
+        CategoryEntity categoryEntity = new CategoryEntity();
+        categoryEntity.setCategoryName(categoryRequest.getCategoryName());
+        categoryEntity.setUser(user);
+//      save the data
+        CategoryEntity savedCategory = categoryRepo.save(categoryEntity);
+//      return sample data after saving
+        CategoryResponse dto = new CategoryResponse();
+        dto.setCategoryId(savedCategory.getCategoryId());
+        dto.setCategoryName(savedCategory.getCategoryName());
+        return ApiResponse.success(dto);
     }
 
     public CategoryResponse updateCategoryHandler(Integer categoryId, CategoryRequest categoryRequest) {

@@ -2,6 +2,7 @@ package com.manga.collectionBend.service;
 
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.UserRepo;
+import com.manga.collectionBend.dto.ApiResponse;
 import com.manga.collectionBend.dto.CollectionDto;
 import com.manga.collectionBend.dto.CollectionPageResponse;
 import com.manga.collectionBend.entities.CategoryEntity;
@@ -47,13 +48,29 @@ public class CollectionServiceImpl implements CollectionService{
     }
 
     @Override
-    public CollectionDto addCollection(CollectionDto collectionDto, MultipartFile file) throws IOException {
+    public ApiResponse<CollectionDto> addCollection(CollectionDto collectionDto, MultipartFile file) throws IOException {
 //        if imageName of collection already exists in our images folder which was uploaded in past
 //        and again user tries to upload same image or different image with same name then we send error
 //        to make him try with another imageName, so that no duplication happens
         if(Files.exists(Paths.get(path + File.separator + file.getOriginalFilename()))){
-            throw new FileExistsException("File name already exists! Please try with another file name!");
+//            throw new FileExistsException("File name already exists! Please try with another file name!");
+            return ApiResponse.error("File name already exists! Please try with another file name! - " + file.getOriginalFilename());
         }
+
+        //        to add userReference data into Collection table- not userId-Integer
+        UserEntity user = userRepo.findById(collectionDto.getUserId())
+                .orElseThrow();
+//        Validation to prevent duplicate data entries with same collection name
+        List<CollectionEntity> collections = collectionRepo.findByUserId(user);
+        // Check for duplicate category name (case-insensitive) to prevent duplicate data creations
+        boolean isDuplicate = collections.stream()
+                .anyMatch(collection -> collection.getName()
+                        .equalsIgnoreCase(collectionDto.getName().trim()));
+
+        if (isDuplicate) {
+            return ApiResponse.error("Collection '" + collectionDto.getName() + "' already exists, pls try with new Collection Name.");
+        }
+
 //        upload the file -> path comes from properties and file from controller
         String uploadedFileName = fileService.uploadFile(path,file);
 
@@ -73,9 +90,7 @@ public class CollectionServiceImpl implements CollectionService{
                 collectionDto.getAddedDate(),
                 collectionDto.getImagename()
         );
-//        to add userReference data into Collection table- not userId-Integer
-        UserEntity user = userRepo.findById(collectionDto.getUserId())
-                .orElseThrow();
+
 //      same reason as above
         CategoryEntity category = categoryRepo.findById(collectionDto.getCategory())
                 .orElseThrow();
@@ -108,7 +123,7 @@ public class CollectionServiceImpl implements CollectionService{
 //        to send new field to frontend
         response.setCategoryName(collection.getCategory().getCategoryName());
 
-        return response;
+        return ApiResponse.success(response);
     }
 
     @Override

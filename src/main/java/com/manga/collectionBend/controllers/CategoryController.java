@@ -1,10 +1,8 @@
 package com.manga.collectionBend.controllers;
 
-import com.manga.collectionBend.dto.CategoryDeleteResponse;
-import com.manga.collectionBend.dto.CategoryDto;
-import com.manga.collectionBend.dto.CategoryRequest;
-import com.manga.collectionBend.dto.CategoryResponse;
+import com.manga.collectionBend.dto.*;
 import com.manga.collectionBend.service.CategoryService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,10 +32,14 @@ public class CategoryController {
 //    POST-Api - Add category
     @PostMapping("/add-category")
 //    if only Json/one part is being sent from frontend then we can use @RequestBody and if we have more then 2 parts - we use @RequestPart for receiving data from frontend Api call
-    public ResponseEntity<CategoryResponse> addCategoryHandler(@RequestBody CategoryRequest categoryRequest) {
-        return ResponseEntity.ok(
-                categoryService.addCategoryHandler(categoryRequest)
-        );
+    public ResponseEntity<ApiResponse<CategoryResponse>> addCategoryHandler(@RequestBody CategoryRequest categoryRequest) {
+        ApiResponse<CategoryResponse> response = categoryService.addCategoryHandler(categoryRequest);
+//        send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+//        send success=true, with CategoryResponse data object when no errors are there
+        return ResponseEntity.ok(response);
     }
 
 //    Update-Api category
