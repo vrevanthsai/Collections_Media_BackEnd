@@ -10,8 +10,10 @@ import com.manga.collectionBend.auth.utils.AuthResponse;
 import com.manga.collectionBend.auth.utils.LoginRequest;
 import com.manga.collectionBend.auth.utils.RefreshTokenRequest;
 import com.manga.collectionBend.auth.utils.RegisterRequest;
+import com.manga.collectionBend.dto.ApiResponse;
 import com.manga.collectionBend.dto.CategoryDto;
 import com.manga.collectionBend.service.CategoryService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,14 +39,21 @@ public class AuthController {
 
 //    Register API
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest registerRequest){
-        return ResponseEntity.ok(authService.register(registerRequest));
+    public ResponseEntity<ApiResponse<AuthResponse>> register(@RequestBody RegisterRequest registerRequest){
+        ApiResponse<AuthResponse> response = authService.register(registerRequest);
+        //   send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+//        send success=true, with AuthResponse data object when no errors are there
+        return ResponseEntity.ok(response);
     }
 
     //    Login API
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest){ // or create and use normal LoginDao class for POJOs
-        return ResponseEntity.ok(authService.login(loginRequest));
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody LoginRequest loginRequest){ // or create and use normal LoginDao class for POJOs
+        ApiResponse<AuthResponse> response = authService.login(loginRequest);
+        return ResponseEntity.ok(response);
     }
 
 //    RefreshToken Handling Api which generates new accessTokens when user Relogins(with Token) without credentials
