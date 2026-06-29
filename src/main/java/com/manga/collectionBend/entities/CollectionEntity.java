@@ -67,8 +67,8 @@ public class CollectionEntity {
 //    private Date addedDate;
     private String addedDate;
 
-    @Column(nullable = false, length = 300)
-    @NotBlank(message = "Please provide collection's imagename")
+    @Column(nullable = true, length = 300)
+//    @NotBlank(message = "Please provide collection's imagename")
     private String imagename;
 
     public Integer getCollectionId() {

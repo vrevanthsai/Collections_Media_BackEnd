@@ -35,7 +35,7 @@ public class CollectionController {
 //    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/add-collection")
 //    Both Method params - naming should be used same in FrontEnd while sending data
-    public ResponseEntity<ApiResponse<CollectionDto>> addCollectionHandler(@RequestPart MultipartFile file,
+    public ResponseEntity<ApiResponse<CollectionDto>> addCollectionHandler(@RequestPart(value = "file", required = false) MultipartFile file, // making img/file as optional
                                                                            @RequestPart String collectionDto) throws IOException, EmptyFileException {
         // it receives json/string data part and image file part from client
         // collectionDto Type will be String if it comes from FormData and,
@@ -43,9 +43,9 @@ public class CollectionController {
         // if we use String type then we need to convert String data to DTO object to send to service method
 
         //        validation for file
-        if(file.isEmpty()){
-            throw new EmptyFileException("File is empty! Please send another file!");
-        }
+//        if(file.isEmpty()){
+//            throw new EmptyFileException("File is empty! Please send another file!");
+//        }
 
         CollectionDto dto = convertToCollectionDto(collectionDto);
         ApiResponse<CollectionDto> response = collectionService.addCollection(dto,file);
@@ -88,7 +88,7 @@ public class CollectionController {
 
     //    PUT-UPDATE API
     @PutMapping("/update/{collectionId}")
-    public ResponseEntity<CollectionDto> updateCollectionHandler(@PathVariable Integer collectionId,
+    public ResponseEntity<ApiResponse<CollectionDto>> updateCollectionHandler(@PathVariable Integer collectionId,
                                                                  @RequestPart String collectionDtoObj,
 //                                                                 Make File-part required=false because user can send new img or just null/which uses old img
                                                                  @RequestPart(required = false) MultipartFile file) throws IOException {
@@ -97,7 +97,12 @@ public class CollectionController {
         // Here - if new file is given then we send that to DB or we take null which means old image-file is there
         if(file == null || file.isEmpty()) file = null;
         CollectionDto collectionDto = convertToCollectionDto(collectionDtoObj);
-        return ResponseEntity.ok(collectionService.updateCollection(collectionId, collectionDto, file));
+        ApiResponse<CollectionDto> response = collectionService.updateCollection(collectionId, collectionDto, file);
+        //        send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+        return ResponseEntity.ok(response);
     }
 
     //    DELETE-API

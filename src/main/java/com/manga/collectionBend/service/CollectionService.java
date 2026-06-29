@@ -15,7 +15,7 @@ public interface CollectionService {
 
     List<CollectionDto> getAllCollections();
 
-    CollectionDto updateCollection(Integer collectionId, CollectionDto collectionDto, MultipartFile file) throws IOException;
+    ApiResponse<CollectionDto> updateCollection(Integer collectionId, CollectionDto collectionDto, MultipartFile file) throws IOException;
 
     String deleteCollection(Integer collectionId) throws IOException;
 
