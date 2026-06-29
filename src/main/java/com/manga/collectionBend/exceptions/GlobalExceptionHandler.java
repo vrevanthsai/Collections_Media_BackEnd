@@ -48,4 +48,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponse.error("Invalid email or password. Please try again."));
     }
+
+//    Handling Invalid OTP exception in forgot-pwd api
+    @ExceptionHandler(InvalidOTPException.class)
+    public ResponseEntity<ApiResponse<Object>> handleInvalidOTPException(InvalidOTPException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
 }

@@ -6,9 +6,9 @@ import com.manga.collectionBend.auth.repositories.ForgotPasswordRepo;
 import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.auth.utils.ChangePassword;
 import com.manga.collectionBend.dto.MailBody;
+import com.manga.collectionBend.exceptions.InvalidOTPException;
 import com.manga.collectionBend.service.EmailService;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -125,7 +125,7 @@ public class ForgotPasswordController {
 //     if we get fp-Data then the provided otp value from client is correct
 //     or we have empty data in fp-var then otp provided is wrong which is not present in our stored data-records
         ForgotPassword fp = forgotPasswordRepo.findByOtpAndUser(otp, user)
-                .orElseThrow(() -> new RuntimeException("Invalid OTP for email: "+ email)); // Todo- create Custom Exception response
+                .orElseThrow(() -> new InvalidOTPException("Invalid OTP for email: "+ email)); // in GlobalException file - custom error msg is sent to frontend
 
 //        compares stored expiration time range with present time when user clicks for verify OTP-button for varifying his OTP
 //       returns True if present time is outside(exceeded) the expiration time range(1min.70sec-from when it was created) or else False
@@ -144,7 +144,7 @@ public class ForgotPasswordController {
 //        forgotPasswordRepo.save(fp);
 
 //        if it passes all above conditions/statements - then provided otp is valid and is within expirationTime range
-        return ResponseEntity.ok("OTP verified!");
+        return ResponseEntity.ok("OTP Verified Successfully! Please enter your new password below.");
     }
 
 //    3rd) API for Storing new password
