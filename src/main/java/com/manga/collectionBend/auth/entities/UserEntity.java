@@ -29,6 +29,7 @@ public class UserEntity implements UserDetails {
     public UserEntity(){}
 
     @Id
+//    todo- Change number sequence to random numbers sequence where guessing other user's id should be hard for attacks or other users
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer userId;
 

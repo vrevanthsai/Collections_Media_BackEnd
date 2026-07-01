@@ -2,6 +2,7 @@ package com.manga.collectionBend.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.manga.collectionBend.dto.ApiResponse;
 import com.manga.collectionBend.dto.CollectionDto;
 import com.manga.collectionBend.dto.CollectionPageResponse;
 import com.manga.collectionBend.exceptions.EmptyFileException;
@@ -18,7 +19,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*")
-@RequestMapping("/api/v1/collection")
+@RequestMapping("/api/v1/user/{userId}/collection")
 public class CollectionController {
 
     private final CollectionService collectionService;
@@ -34,21 +35,27 @@ public class CollectionController {
 //    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/add-collection")
 //    Both Method params - naming should be used same in FrontEnd while sending data
-    public ResponseEntity<CollectionDto> addCollectionHandler(@RequestPart MultipartFile file,
-                                                              @RequestPart String collectionDto) throws IOException, EmptyFileException {
+    public ResponseEntity<ApiResponse<CollectionDto>> addCollectionHandler(@RequestPart(value = "file", required = false) MultipartFile file, // making img/file as optional
+                                                                           @RequestPart String collectionDto) throws IOException, EmptyFileException {
         // it receives json/string data part and image file part from client
         // collectionDto Type will be String if it comes from FormData and,
         // it will be direct json(CollectionDto- where springboot will convert automatically from json to DTO object) if it is raw data from PostMan
         // if we use String type then we need to convert String data to DTO object to send to service method
 
         //        validation for file
-        if(file.isEmpty()){
-            throw new EmptyFileException("File is empty! Please send another file!");
-        }
+//        if(file.isEmpty()){
+//            throw new EmptyFileException("File is empty! Please send another file!");
+//        }
 
         CollectionDto dto = convertToCollectionDto(collectionDto);
-//        HttpStatus.CREATED may bt 200/202 status code
-        return new ResponseEntity<>(collectionService.addCollection(dto,file), HttpStatus.CREATED);
+        ApiResponse<CollectionDto> response = collectionService.addCollection(dto,file);
+        //        send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+
+//        send success=true, with CollectionDto data object when no errors are there
+        return ResponseEntity.ok(response);
     };
 
     private CollectionDto convertToCollectionDto(String collectionDtoObj) throws JsonProcessingException {
@@ -73,9 +80,36 @@ public class CollectionController {
     }
 
     //    User-Based GET Api for Collection - which only sends collection data based on UserId provided to FrontEnd-Home page
-    @GetMapping("/userid/{userid}")
-    public ResponseEntity<List<CollectionDto>> getUserBasedCollectionsHandler(@PathVariable String userid){
-        return ResponseEntity.ok(collectionService.getUserBasedCollections(userid));
+    //    userId param value is linked in above parent RequestMapping() and it will be used in PathVariable- where both vars name are same
+    @GetMapping("/get-user-collections")
+    public ResponseEntity<List<CollectionDto>> getUserBasedCollectionsHandler(@PathVariable Integer userId){
+        return ResponseEntity.ok(collectionService.getUserBasedCollections(userId));
+    }
+
+    //    PUT-UPDATE API
+    @PutMapping("/update/{collectionId}")
+    public ResponseEntity<ApiResponse<CollectionDto>> updateCollectionHandler(@PathVariable Integer collectionId,
+                                                                 @RequestPart String collectionDtoObj,
+//                                                                 Make File-part required=false because user can send new img or just null/which uses old img
+                                                                 @RequestPart(required = false) MultipartFile file) throws IOException {
+//    2 RequestPart Method params - naming should be used same in FrontEnd while sending data and PutMapping-var and PathVariable-var must have same naming
+        //        setting file value to null if client side file is not provided to be updated
+        // Here - if new file is given then we send that to DB or we take null which means old image-file is there
+        if(file == null || file.isEmpty()) file = null;
+        CollectionDto collectionDto = convertToCollectionDto(collectionDtoObj);
+        ApiResponse<CollectionDto> response = collectionService.updateCollection(collectionId, collectionDto, file);
+        //        send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    //    DELETE-API
+    @DeleteMapping("/delete/{collectionId}")
+//    we should give Type-String because it returns string in service method
+    public ResponseEntity<String> deleteCollectionHandler(@PathVariable Integer collectionId) throws IOException {
+        return ResponseEntity.ok(collectionService.deleteCollection(collectionId));
     }
 
 //    Get-All collections Api with Pagination logic
@@ -102,26 +136,5 @@ public class CollectionController {
     ){
         return ResponseEntity.ok(collectionService.getAllCollectionsWithPaginationAndSorting(pageNumber, pageSize, sortBy, dir));
     };
-
-//    PUT-UPDATE API
-    @PutMapping("/update/{collectionId}")
-    public ResponseEntity<CollectionDto> updateCollectionHandler(@PathVariable Integer collectionId,
-                                                                 @RequestPart String collectionDtoObj,
-//                                                                 Make File-part required=false because user can send new img or just null/which uses old img
-                                                                 @RequestPart(required = false) MultipartFile file) throws IOException {
-//    2 RequestPart Method params - naming should be used same in FrontEnd while sending data and PutMapping-var and PathVariable-var must have same naming
-        //        setting file value to null if client side file is not provided to be updated
-      // Here - if new file is given then we send that to DB or we take null which means old image-file is there
-        if(file == null || file.isEmpty()) file = null;
-        CollectionDto collectionDto = convertToCollectionDto(collectionDtoObj);
-        return ResponseEntity.ok(collectionService.updateCollection(collectionId, collectionDto, file));
-    }
-
-//    DELETE-API
-    @DeleteMapping("/delete/{collectionId}")
-//    we should give Type-String because it returns string in service method
-    public ResponseEntity<String> deleteCollectionHandler(@PathVariable Integer collectionId) throws IOException {
-        return ResponseEntity.ok(collectionService.deleteCollection(collectionId));
-    }
 
 }

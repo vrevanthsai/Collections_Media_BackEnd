@@ -1,12 +1,8 @@
 package com.manga.collectionBend.entities;
 
+import com.manga.collectionBend.auth.entities.UserEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-import java.util.Date;
 
 @Entity
 //@NoArgsConstructor
@@ -15,7 +11,7 @@ import java.util.Date;
 @Table(name = "collection")
 public class CollectionEntity {
 
-    public CollectionEntity(Integer collectionId, String name, String category, String userId, Integer rating, String review, String progress, String privacy, String addedDate, String imagename) {
+    public CollectionEntity(Integer collectionId, String name, CategoryEntity category, UserEntity userId, Integer rating, String review, String progress, String privacy, String addedDate, String imagename) {
         this.collectionId = collectionId;
         this.name = name;
         this.category = category;
@@ -39,13 +35,13 @@ public class CollectionEntity {
     @NotBlank(message = "Please provide collection's name")
     private String name;
 
-    @Column(nullable = false)
-    @NotBlank(message = "Please provide collection's category")
-    private String category;
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private CategoryEntity category;
 
-    @Column(nullable = false)
-    @NotBlank(message = "Please provide userId")
-    private String userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity userId;
 
     @Column(nullable = false)
     @NotNull(message = "Please provide collection's rating")
@@ -71,8 +67,8 @@ public class CollectionEntity {
 //    private Date addedDate;
     private String addedDate;
 
-    @Column(nullable = false, length = 300)
-    @NotBlank(message = "Please provide collection's imagename")
+    @Column(nullable = true, length = 300)
+//    @NotBlank(message = "Please provide collection's imagename")
     private String imagename;
 
     public Integer getCollectionId() {
@@ -91,20 +87,20 @@ public class CollectionEntity {
         this.name = name;
     }
 
-    public String getCategory() {
+    public CategoryEntity getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(CategoryEntity category) {
         this.category = category;
     }
 
-    public String getUserId() {
+    public UserEntity getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUserId(UserEntity user) {
+        this.userId = user;
     }
 
     public Integer getRating() {

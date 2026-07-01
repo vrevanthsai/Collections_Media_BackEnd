@@ -3,6 +3,8 @@ package com.manga.collectionBend.auth.utils;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+
 // this file contains Register API logic and what Register-Request body looks like and this file is like DAO
 public class RegisterRequest {
     
@@ -12,6 +14,9 @@ public class RegisterRequest {
     @NotBlank(message = "The password field can't be blank")
     @Size(min = 5, message = "The password must have at least 5 characters")
     private String password;
+
+//    Categories selected by User on registering(initial preferences
+    private List<String> selectedCategories;
 
     public RegisterRequest(String name, String email, String username, String password) {
         this.name = name;
@@ -54,7 +59,15 @@ public class RegisterRequest {
         this.password = password;
     }
 
-    /* =======================
+    public List<String> getSelectedCategories() {
+        return selectedCategories;
+    }
+
+    public void setSelectedCategories(List<String> selectedCategories) {
+        this.selectedCategories = selectedCategories;
+    }
+
+/* =======================
        Builder- manual implementation because lombok- @Builder is not working
        - builder() is used to create objects step-by-step used for Very readable
        - or just use new ClassName()-constructor to create objects Normally

@@ -1,5 +1,6 @@
 package com.manga.collectionBend.auth.services;
 
+import com.manga.collectionBend.auth.entities.UserEntity;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -63,6 +64,13 @@ public class JwtService {
     ) {
         extraClaims = new HashMap<>(extraClaims);
         extraClaims.put("role", userDetails.getAuthorities()); // authentication filter based on user-ROLE and it will only have 2 roles- Admin or User
+
+//        Setting UserId -value to jwtToken/access token which will be user for extra UserIdValidationFilter which will prevent from unauthorize access of other user's data using their userId-values
+        // Cast to UserEntity to access getId()
+        if (userDetails instanceof UserEntity userEntity) {
+            extraClaims.put("userId", String.valueOf(userEntity.getUserId()));
+        }
+
         return Jwts
                 .builder()
                 .setClaims(extraClaims)

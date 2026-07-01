@@ -1,10 +1,15 @@
 package com.manga.collectionBend.service;
 
+import com.manga.collectionBend.auth.entities.UserEntity;
+import com.manga.collectionBend.auth.repositories.UserRepo;
+import com.manga.collectionBend.dto.ApiResponse;
 import com.manga.collectionBend.dto.CollectionDto;
 import com.manga.collectionBend.dto.CollectionPageResponse;
+import com.manga.collectionBend.entities.CategoryEntity;
 import com.manga.collectionBend.entities.CollectionEntity;
 import com.manga.collectionBend.exceptions.CollectionNotFoundExpception;
 import com.manga.collectionBend.exceptions.FileExistsException;
+import com.manga.collectionBend.repositories.CategoryRepo;
 import com.manga.collectionBend.repositories.CollectionRepo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -20,12 +25,15 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class CollectionServiceImpl implements CollectionService{
 
+    private final UserRepo userRepo;
     private final CollectionRepo collectionRepo;
     private final FileService fileService;
+    private final CategoryRepo categoryRepo;
 
     @Value("${project.collectionImage}")
     private String path;
@@ -33,31 +41,55 @@ public class CollectionServiceImpl implements CollectionService{
     @Value("${base.url}")
     private String baseUrl;
 
-    public CollectionServiceImpl(CollectionRepo collectionRepo, FileService fileService) {
+    public CollectionServiceImpl(UserRepo userRepo, CollectionRepo collectionRepo, FileService fileService, CategoryRepo categoryRepo) {
+        this.userRepo = userRepo;
         this.collectionRepo = collectionRepo;
         this.fileService = fileService;
+        this.categoryRepo = categoryRepo;
     }
 
     @Override
-    public CollectionDto addCollection(CollectionDto collectionDto, MultipartFile file) throws IOException {
+    public ApiResponse<CollectionDto> addCollection(CollectionDto collectionDto, MultipartFile file) throws IOException {
 //        if imageName of collection already exists in our images folder which was uploaded in past
 //        and again user tries to upload same image or different image with same name then we send error
 //        to make him try with another imageName, so that no duplication happens
-        if(Files.exists(Paths.get(path + File.separator + file.getOriginalFilename()))){
-            throw new FileExistsException("File name already exists! Please try with another file name!");
+        if(file != null && !file.isEmpty() && Files.exists(Paths.get(path + File.separator + file.getOriginalFilename()))){
+//            throw new FileExistsException("File name already exists! Please try with another file name!");
+            return ApiResponse.error("File name already exists! Please try with another file name! - " + file.getOriginalFilename());
         }
-//        upload the file -> path comes from properties and file from controller
-        String uploadedFileName = fileService.uploadFile(path,file);
 
-//        set the value of field 'imageName' in collectionDto
-        collectionDto.setImagename(uploadedFileName);
+        //        to add userReference data into Collection table- not userId-Integer
+        UserEntity user = userRepo.findById(collectionDto.getUserId())
+                .orElseThrow();
+//        Validation to prevent duplicate data entries with same collection name
+        List<CollectionEntity> collections = collectionRepo.findByUserId(user);
+        // Check for duplicate category name (case-insensitive) to prevent duplicate data creations
+        boolean isDuplicate = collections.stream()
+                .anyMatch(collection -> collection.getName()
+                        .equalsIgnoreCase(collectionDto.getName().trim()));
+
+        if (isDuplicate) {
+            return ApiResponse.error("Collection '" + collectionDto.getName() + "' already exists, pls try with new Collection Name.");
+        }
+
+        String uploadedFileName = "";
+//        only store img- if file is sent from frontend - because img field is optional
+        if(file != null && !file.isEmpty()){
+            //        upload the file -> path comes from properties and file from controller
+            uploadedFileName = fileService.uploadFile(path,file);
+
+//        set the value of field 'imageName' in collectionDto- if file is there
+            collectionDto.setImagename(uploadedFileName);
+        } else {
+            collectionDto.setImagename(""); // mark it as null or "" empty string - if file/img is not there
+        }
 
 //        map dto object to Collection Entity object
         CollectionEntity collection = new CollectionEntity(
                 null, // id should be null for saving because we're already using autoGeneration Ids in entity file for ID
                 collectionDto.getName(),
-                collectionDto.getCategory(),
-                collectionDto.getUserId(),
+                null, // value will be added below
+                null,
                 collectionDto.getRating(),
                 collectionDto.getReview(),
                 collectionDto.getProgress(),
@@ -66,20 +98,30 @@ public class CollectionServiceImpl implements CollectionService{
                 collectionDto.getImagename()
         );
 
+//      same reason as above
+        CategoryEntity category = categoryRepo.findById(collectionDto.getCategory())
+                .orElseThrow();
+//      adding other tabless references and saving them into Collection table record
+        collection.setUserId(user);
+        collection.setCategory(category);
+
 //        save the collection entity object to DB using repo methods
 //        save() - saves new primaryId as new record in table if it does not exist
 //        and if it exists then it updates that record of ID
         CollectionEntity savedCollection = collectionRepo.save(collection);
 
-//      generate the CollectionImage URL to send to client- it is an API(image retrieve) from fileService
-        String collectionUrl = baseUrl + "/file/" + uploadedFileName;
+        String collectionUrl = ""; // send empty string as img path if collection does not have image-file
+        if(file != null && !file.isEmpty()){
+            //  if image-file is there then generate the CollectionImage URL to send to client- it is an API(image retrieve) from fileService
+            collectionUrl = baseUrl + "/file/" + uploadedFileName;
+        }
 
 //        map collectionEntity object to DTO object and return it
         CollectionDto response = new CollectionDto(
             savedCollection.getCollectionId(),
                 savedCollection.getName(),
-                savedCollection.getCategory(),
-                savedCollection.getUserId(),
+                savedCollection.getCategory().getCategoryId(), // Collection table has - Category table reference - inside that we get Category id field
+                savedCollection.getUserId().getUserId(),
                 savedCollection.getRating(),
                 savedCollection.getReview(),
                 savedCollection.getProgress(),
@@ -88,8 +130,10 @@ public class CollectionServiceImpl implements CollectionService{
                 savedCollection.getImagename(),
                 collectionUrl
         );
+//        to send new field to frontend
+        response.setCategoryName(collection.getCategory().getCategoryName());
 
-        return response;
+        return ApiResponse.success(response);
     }
 
     @Override
@@ -98,15 +142,18 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionEntity collection = collectionRepo.findById(collectionId)
                 .orElseThrow(() -> new CollectionNotFoundExpception("Collection not found with id = " + collectionId));
 
-//        generate imageURL
-        String collectionUrl = baseUrl + "/file/" + collection.getImagename();
+        String collectionUrl = "";
+        if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
+            //        generate imageURL
+            collectionUrl = baseUrl + "/file/" + collection.getImagename(); // if imageName path exists in DB then create a Url path to send to Client
+        }
 
 //        map to collectionDto object and return it
         CollectionDto response = new CollectionDto(
                 collection.getCollectionId(),
                 collection.getName(),
-                collection.getCategory(),
-                collection.getUserId(),
+                collection.getCategory().getCategoryId(),
+                collection.getUserId().getUserId(),
                 collection.getRating(),
                 collection.getReview(),
                 collection.getProgress(),
@@ -115,6 +162,7 @@ public class CollectionServiceImpl implements CollectionService{
                 collection.getImagename(),
                 collectionUrl
         );
+        response.setCategoryName(collection.getCategory().getCategoryName());
 
         return response;
     }
@@ -129,12 +177,16 @@ public class CollectionServiceImpl implements CollectionService{
 //        iterate through the list and generate imageURL for each collection obj of retrieved data objects from DB and
 //        map to CollectionDto object
         for(CollectionEntity collection : collections){
-            String collectionUrl = baseUrl + "/file/" + collection.getImagename();
+            String collectionUrl = "";
+            if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
+                //        generate imageURL
+                collectionUrl = baseUrl + "/file/" + collection.getImagename(); // if imageName path exists in DB then create a Url path to send to Client
+            }
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
                     collection.getName(),
-                    collection.getCategory(),
-                    collection.getUserId(),
+                    collection.getCategory().getCategoryId(),
+                    collection.getUserId().getUserId(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
@@ -143,6 +195,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
+            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
             collectionDtos.add(collectionDto);
         }
 
@@ -150,21 +203,27 @@ public class CollectionServiceImpl implements CollectionService{
     }
 
     @Override
-    public List<CollectionDto> getUserBasedCollections(String userId) {
+    public List<CollectionDto> getUserBasedCollections(Integer userId) {
 //        fetch all collection data based UserId provided from DB
-        List<CollectionEntity> collections = collectionRepo.findByUserId(userId);
+        UserEntity user = userRepo.findById(userId).get();
+        List<CollectionEntity> collections = collectionRepo.findByUserId(user);
 
         List<CollectionDto> collectionDtos = new ArrayList<>();
 
 //        iterate through the list and generate imageURL for each collection obj of retrieved data objects from DB and
 //        map to CollectionDto object
         for(CollectionEntity collection : collections){
-            String collectionUrl = baseUrl + "/file/" + collection.getImagename();
+//            generate imageURL - only if imageUrl is present in DB or else send "" empty string- which means user not given image/file while creating a collection data- as image field is OPTIONAL
+            String collectionUrl = "";
+            if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
+                //        generate imageURL
+                collectionUrl = baseUrl + "/file/" + collection.getImagename(); // if imageName path exists in DB then create a Url path to send to Client
+            }
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
                     collection.getName(),
-                    collection.getCategory(),
-                    collection.getUserId(),
+                    collection.getCategory().getCategoryId(),
+                    collection.getUserId().getUserId(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
@@ -173,6 +232,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
+            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
             collectionDtos.add(collectionDto);
         }
 
@@ -180,8 +240,12 @@ public class CollectionServiceImpl implements CollectionService{
     }
 
     @Override
-    public CollectionDto updateCollection(Integer collectionId, CollectionDto collectionDto, MultipartFile file) throws IOException {
-//        check if collection object/record exists with given collectionId or not
+    public ApiResponse<CollectionDto> updateCollection(Integer collectionId, CollectionDto collectionDto, MultipartFile file) throws IOException {
+        if(file != null && !file.isEmpty() && Files.exists(Paths.get(path + File.separator + file.getOriginalFilename()))){
+//            throw new FileExistsException("File name already exists! Please try with another file name!");
+            return ApiResponse.error("File name already exists! Please try with another file name! - " + file.getOriginalFilename());
+        }
+        //        check if collection object/record exists with given collectionId or not
         CollectionEntity existingCollection = collectionRepo.findById(collectionId)
                 .orElseThrow(() -> new CollectionNotFoundExpception("Collection not found with id = " + collectionId));
 
@@ -190,8 +254,10 @@ public class CollectionServiceImpl implements CollectionService{
 //        and upload the new image/file
         String fileName = existingCollection.getImagename();
         if(file != null){
-//            deleting old image
-            Files.deleteIfExists(Paths.get(path + File.separator + fileName));
+            if(!Objects.equals(fileName, "")){
+                //            deleting old image
+                Files.deleteIfExists(Paths.get(path + File.separator + fileName));
+            }
 //            uploading new image
             fileName = fileService.uploadFile(path, file);
         }
@@ -203,8 +269,8 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionEntity collection = new CollectionEntity(
                 existingCollection.getCollectionId(), // providing id which will update this ID's record in table
                 collectionDto.getName(),
-                collectionDto.getCategory(),
-                collectionDto.getUserId(),
+                null,
+                null,
                 collectionDto.getRating(),
                 collectionDto.getReview(),
                 collectionDto.getProgress(),
@@ -213,19 +279,32 @@ public class CollectionServiceImpl implements CollectionService{
                 collectionDto.getImagename()
         );
 
+        UserEntity user = userRepo.findById(collectionDto.getUserId())
+                .orElseThrow();
+
+        CategoryEntity category = categoryRepo.findById(collectionDto.getCategory())
+                .orElseThrow();
+
+        collection.setUserId(user);
+        collection.setCategory(category);
+
 //        save the updated collection object, it returns saved/updated collection object
         // save()- will update the record where collection(entity object) has ID in it.
         CollectionEntity updatedCollection = collectionRepo.save(collection);
 
 //        generate imageURL for it
-        String collectionUrl = baseUrl + "/file/" + fileName;
+        String collectionUrl = "";
+        if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
+            //        generate imageURL
+            collectionUrl = baseUrl + "/file/" + collection.getImagename(); // if imageName path exists in DB then create a Url path to send to Client
+        }
 
 //        map to CollectionDto for it
         CollectionDto response = new CollectionDto(
                 collection.getCollectionId(),
                 collection.getName(),
-                collection.getCategory(),
-                collection.getUserId(),
+                collection.getCategory().getCategoryId(),
+                collection.getUserId().getUserId(),
                 collection.getRating(),
                 collection.getReview(),
                 collection.getProgress(),
@@ -234,8 +313,9 @@ public class CollectionServiceImpl implements CollectionService{
                 collection.getImagename(),
                 collectionUrl
         );
+        response.setCategoryName(collection.getCategory().getCategoryName());
 
-        return response;
+        return ApiResponse.success(response);
     }
 
     @Override
@@ -277,8 +357,8 @@ public class CollectionServiceImpl implements CollectionService{
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
                     collection.getName(),
-                    collection.getCategory(),
-                    collection.getUserId(),
+                    collection.getCategory().getCategoryId(),
+                    collection.getUserId().getUserId(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
@@ -287,6 +367,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
+            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
 //            we convert entity data to DTO object and send that DTO only to controller, not direct entity object
             collectionDtos.add(collectionDto);
         }
@@ -328,8 +409,8 @@ public class CollectionServiceImpl implements CollectionService{
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
                     collection.getName(),
-                    collection.getCategory(),
-                    collection.getUserId(),
+                    collection.getCategory().getCategoryId(),
+                    collection.getUserId().getUserId(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
@@ -338,6 +419,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
+            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
 //            we convert entity data to DTO object and send that DTO only to controller, not direct entity object
             collectionDtos.add(collectionDto);
         }

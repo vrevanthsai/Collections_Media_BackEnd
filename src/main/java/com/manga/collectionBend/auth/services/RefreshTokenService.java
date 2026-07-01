@@ -4,6 +4,7 @@ import com.manga.collectionBend.auth.entities.RefreshToken;
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.RefreshTokenRepo;
 import com.manga.collectionBend.auth.repositories.UserRepo;
+import com.manga.collectionBend.exceptions.RefreshTokenExpiredException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -67,7 +68,8 @@ public class RefreshTokenService {
 //      if existing RefTOken is expired then Delete its value from Table/DB
 //      when we delete child table-row then its mapping row in parent-table should also get cleared(value=null)
             refreshTokenRepo.delete(refToken);
-            throw new RuntimeException("Refresh Token expired - Please Re-Login"); // create Custom Exception in exceptions-PACKAGE TO SEND proper Error msg to client
+//            throw new RuntimeException("Refresh Token expired - Please Re-Login");
+            throw new RefreshTokenExpiredException("Refresh Token expired - Please Re-Login");
         }
 
 //        if all good then return RefreshToken
