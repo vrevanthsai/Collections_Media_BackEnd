@@ -98,7 +98,7 @@ public class CollectionServiceImpl implements CollectionService{
                 collectionDto.getImagename()
         );
 
-//      same reason as above
+//      to add categoryReference data into Collection table- not categoryId-Integer
         CategoryEntity category = categoryRepo.findById(collectionDto.getCategory())
                 .orElseThrow();
 //      adding other tabless references and saving them into Collection table record
@@ -249,6 +249,20 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionEntity existingCollection = collectionRepo.findById(collectionId)
                 .orElseThrow(() -> new CollectionNotFoundExpception("Collection not found with id = " + collectionId));
 
+        //        to add userReference data into Collection table- not userId-Integer
+        UserEntity user = userRepo.findById(collectionDto.getUserId())
+                .orElseThrow();
+        //        Validation to prevent duplicate data entries with same collection name
+        List<CollectionEntity> collections = collectionRepo.findByUserId(user);
+        // Check for duplicate category name (case-insensitive) to prevent duplicate data creations
+        boolean isDuplicate = collections.stream()
+                .anyMatch(collection -> collection.getName()
+                        .equalsIgnoreCase(collectionDto.getName().trim()));
+
+        if (isDuplicate) {
+            return ApiResponse.error("Collection '" + collectionDto.getName() + "' already exists, pls try with new Collection Name.");
+        }
+
 //        if file/image is null then do nothing
 //        but if file is not null then delete existing file/image associated with the record(imageName in DB and actual image in Bend-imagefolder)
 //        and upload the new image/file
@@ -279,9 +293,7 @@ public class CollectionServiceImpl implements CollectionService{
                 collectionDto.getImagename()
         );
 
-        UserEntity user = userRepo.findById(collectionDto.getUserId())
-                .orElseThrow();
-
+        //      to add categoryReference data into Collection table- not categoryId-Integer
         CategoryEntity category = categoryRepo.findById(collectionDto.getCategory())
                 .orElseThrow();
 
@@ -326,10 +338,13 @@ public class CollectionServiceImpl implements CollectionService{
         String collectionName = existingCollection.getName();
 //         Integer id = existingCollection.getCollectionId();
 
-//        delete the file/image associated with this object which will be deleted from table/db
-        Files.deleteIfExists(Paths.get(path + File.separator + existingCollection.getImagename()));
+//        only delete file/imagge in CollectionImages-backend-folder if in Db it has imageName stored(means user given img while creating this collection) or else imageName="" empty(means user did no give any img which does not need deleting anything)
+        if(!Objects.equals(existingCollection.getImagename(), "")){
+            //        delete the file/image associated with this object which will be deleted from table/db
+            Files.deleteIfExists(Paths.get(path + File.separator + existingCollection.getImagename()));
+        }
 
-//        delete the collection object from record/table
+        //        delete the collection object from record/table
         collectionRepo.delete(existingCollection);
 
         return "Collection deleted with name = " + collectionName;
