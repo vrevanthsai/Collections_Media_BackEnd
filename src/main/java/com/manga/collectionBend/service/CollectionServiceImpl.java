@@ -252,15 +252,20 @@ public class CollectionServiceImpl implements CollectionService{
         //        to add userReference data into Collection table- not userId-Integer
         UserEntity user = userRepo.findById(collectionDto.getUserId())
                 .orElseThrow();
-        //        Validation to prevent duplicate data entries with same collection name
-        List<CollectionEntity> collections = collectionRepo.findByUserId(user);
-        // Check for duplicate category name (case-insensitive) to prevent duplicate data creations
-        boolean isDuplicate = collections.stream()
-                .anyMatch(collection -> collection.getName()
-                        .equalsIgnoreCase(collectionDto.getName().trim()));
 
-        if (isDuplicate) {
-            return ApiResponse.error("Collection '" + collectionDto.getName() + "' already exists, pls try with new Collection Name.");
+//       only prevent duplication for when updating collection name to existing collection name
+//        means- if existingCollection name is not equals to user-request-Dto name then duplication logic runs below-lines or else it will be skipped(because both are same)
+        if(!Objects.equals(existingCollection.getName(), collectionDto.getName())){
+            //        Validation to prevent duplicate data entries with same collection name
+            List<CollectionEntity> collections = collectionRepo.findByUserId(user);
+            // Check for duplicate category name (case-insensitive) to prevent duplicate data creations
+            boolean isDuplicate = collections.stream()
+                    .anyMatch(collection -> collection.getName()
+                            .equalsIgnoreCase(collectionDto.getName().trim()));
+
+            if (isDuplicate) {
+                return ApiResponse.error("Collection '" + collectionDto.getName() + "' already exists, pls try with new Collection Name.");
+            }
         }
 
 //        if file/image is null then do nothing
