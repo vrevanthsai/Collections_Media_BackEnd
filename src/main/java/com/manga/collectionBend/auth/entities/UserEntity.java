@@ -16,12 +16,13 @@ import java.util.List;
 // UserDetails is used for integrating this userEntity class with spring security for login filter
 public class UserEntity implements UserDetails {
     public UserEntity(Integer userId, String name, String username, String email,
-                      String password, RefreshToken refreshToken, UserRole role) {
+                      String password, String addedDate, RefreshToken refreshToken, UserRole role) {
         this.userId = userId;
         this.name = name;
         this.uniqueUsername = username;
         this.email = email;
         this.password = password;
+        this.addedDate = addedDate;
         this.refreshToken = refreshToken;
         this.role = role;
     }
@@ -52,6 +53,10 @@ public class UserEntity implements UserDetails {
     @NotBlank(message = "The password field can't be blank")
     @Size(min = 5, message = "The password must have at least 5 characters")
     private String password;
+
+    @NotBlank(message = "Please provide user's created Date")
+//    private Date addedDate;
+    private String addedDate;
 
 //     we store refresh tokens in DB of user table to avoid multiple user re-logins for some duration
 //    onetoone is for mapping two tables with each other
@@ -124,6 +129,14 @@ public class UserEntity implements UserDetails {
         this.role = role;
     }
 
+    public String getAddedDate() {
+        return addedDate;
+    }
+
+    public void setAddedDate(String addedDate) {
+        this.addedDate = addedDate;
+    }
+
     //    Abstract Methods of UserDetails Interface
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -180,6 +193,7 @@ public class UserEntity implements UserDetails {
         private String email;
         private String uniqueUsername;
         private String password;
+        private String addedDate;
         private RefreshToken refreshToken;
         private UserRole role;
 
@@ -221,6 +235,11 @@ public class UserEntity implements UserDetails {
             return this;
         }
 
+        public Builder addedDate(String addedDate) {
+            this.addedDate = addedDate;
+            return this;
+        }
+
         public UserEntity build() {
             UserEntity user = new UserEntity();
             user.userId = this.userId;
@@ -228,6 +247,7 @@ public class UserEntity implements UserDetails {
             user.email = this.email;
             user.uniqueUsername = this.uniqueUsername;
             user.password = this.password;
+            user.addedDate = this.addedDate;
             user.refreshToken = this.refreshToken;
             user.role = this.role;
             return user;

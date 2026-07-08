@@ -24,4 +24,6 @@ public interface UserRepo extends JpaRepository<UserEntity, Integer> {
     //    custom method to update password field only
     @Query("update UserEntity u set u.password = ?2 where u.email = ?1")
     void updatePassword(String email, String newPassword);
+
+    Optional<UserEntity> findByUniqueUsername(String username);
 }

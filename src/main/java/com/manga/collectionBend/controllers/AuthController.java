@@ -82,4 +82,11 @@ public class AuthController {
                 categoryService.getDefaultCategories()
         );
     }
+
+//    User Profile Apis
+//    Update User API
+
+//    Get Single User details API
+
+//    Delete Single User API
 }
