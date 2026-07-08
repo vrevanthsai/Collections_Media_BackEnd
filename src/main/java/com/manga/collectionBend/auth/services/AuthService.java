@@ -48,8 +48,8 @@ public class AuthService {
         }
 
 //        Validation check to prevent users to create accounts with already existing UserNames
-        Optional<UserEntity> existingUserNameUser = userRepo.findByUniqueUsername(registerRequest.getUsername());
-        if(existingUserNameUser.isPresent()){
+        UserEntity existingUserNameUser = userRepo.findByUniqueUsername(registerRequest.getUsername());
+        if(existingUserNameUser != null){
             return ApiResponse.error("Username already exists with username: " + registerRequest.getUsername() + ", try with new username!!");
         }
 
