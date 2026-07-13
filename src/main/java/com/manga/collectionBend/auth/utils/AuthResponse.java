@@ -12,6 +12,7 @@ public class AuthResponse {
     private String username;
     private String email;
     private String addedDate;
+    private String imagename;
 
 //        NOTE - TRY TO INCLUDE SOME User data fields also while sending Response from Service to Controller-API to Client(fetching this api)
 
@@ -84,6 +85,14 @@ public class AuthResponse {
         this.addedDate = addedDate;
     }
 
+    public String getImagename() {
+        return imagename;
+    }
+
+    public void setImagename(String imagename) {
+        this.imagename = imagename;
+    }
+
     /* =======================
        Builder- manual implementation because lombok- @Builder is not working
        - builder() is used to create objects step-by-step used for Very readable
@@ -104,6 +113,7 @@ public class AuthResponse {
         private String username;
         private String email;
         private String addedDate;
+        private String imagename;
 
 
         private Builder() {
@@ -144,6 +154,11 @@ public class AuthResponse {
             return this;
         }
 
+        public Builder imagename(String imagename) {
+            this.imagename = imagename;
+            return this;
+        }
+
         public AuthResponse build() {
             AuthResponse response = new AuthResponse();
             response.accessToken = this.accessToken;
@@ -153,6 +168,7 @@ public class AuthResponse {
             response.username = this.username;
             response.email = this.email;
             response.addedDate = this.addedDate;
+            response.imagename = this.imagename;
             return response;
         }
     }

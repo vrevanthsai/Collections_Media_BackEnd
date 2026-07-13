@@ -54,7 +54,7 @@ public class UserEntity implements UserDetails {
     @Size(min = 5, message = "The password must have at least 5 characters")
     private String password;
 
-    @NotBlank(message = "Please provide user's created Date")
+//    @NotBlank(message = "Please provide user's created Date")
 //    private Date addedDate;
     private String addedDate;
 
@@ -76,6 +76,12 @@ public class UserEntity implements UserDetails {
 //    which handles enum values
     @Enumerated(EnumType.STRING)
     private UserRole role;
+
+//   User Profile-pic/Avatar image/file vars
+    private String imageName;
+    private String imageType;
+    @Lob
+    private byte[] imageData;
 
     public Integer getUserId() {
         return userId;
@@ -137,6 +143,30 @@ public class UserEntity implements UserDetails {
         this.addedDate = addedDate;
     }
 
+    public String getImageName() {
+        return imageName;
+    }
+
+    public void setImageName(String imageName) {
+        this.imageName = imageName;
+    }
+
+    public String getImageType() {
+        return imageType;
+    }
+
+    public void setImageType(String imageType) {
+        this.imageType = imageType;
+    }
+
+    public byte[] getImageData() {
+        return imageData;
+    }
+
+    public void setImageData(byte[] imageData) {
+        this.imageData = imageData;
+    }
+
     //    Abstract Methods of UserDetails Interface
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -196,6 +226,9 @@ public class UserEntity implements UserDetails {
         private String addedDate;
         private RefreshToken refreshToken;
         private UserRole role;
+        private String imageName;
+        private String imageType;
+        private byte[] imageData;
 
         private Builder() {
         }
@@ -240,6 +273,19 @@ public class UserEntity implements UserDetails {
             return this;
         }
 
+        public Builder imageName(String imageName) {
+            this.imageName = imageName;
+            return this;
+        }
+        public Builder imageType(String imageType) {
+            this.imageType = imageType;
+            return this;
+        }
+        public Builder imageData(byte[] imageData) {
+            this.imageData = imageData;
+            return this;
+        }
+
         public UserEntity build() {
             UserEntity user = new UserEntity();
             user.userId = this.userId;
@@ -250,6 +296,9 @@ public class UserEntity implements UserDetails {
             user.addedDate = this.addedDate;
             user.refreshToken = this.refreshToken;
             user.role = this.role;
+            user.imageName = this.imageName;
+            user.imageType = this.imageType;
+            user.imageData = this.imageData;
             return user;
         }
     }

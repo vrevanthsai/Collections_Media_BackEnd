@@ -142,6 +142,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .addedDate(user.getAddedDate())
                 .username(user.getUniqueUsername()) // sending user-entered username field data - not email
+                .imagename(user.getImageName())
                 .build();
 
         return ApiResponse.success(authResponse);
