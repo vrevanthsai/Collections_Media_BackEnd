@@ -6,7 +6,7 @@ import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.auth.utils.AuthResponse;
 import com.manga.collectionBend.dto.ApiResponse;
-import com.manga.collectionBend.dto.CollectionDto;
+import com.manga.collectionBend.dto.ChangePwdRequest;
 import com.manga.collectionBend.dto.ProfileRequest;
 import com.manga.collectionBend.service.ProfileService;
 import org.springframework.http.HttpStatus;
@@ -73,4 +73,14 @@ public class ProfileController {
 //    Delete Single User API
 
 //    Change User Password Api
+    @PutMapping("/change-password")
+    public ResponseEntity<ApiResponse<String>> changePassword(@PathVariable Integer userId, @RequestBody ChangePwdRequest changePwdRequest){
+        ApiResponse<String> response = profileService.changePwdHandler(userId, changePwdRequest);
+        //   send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+//        send success=true, with AuthResponse data object when no errors are there
+        return ResponseEntity.ok(response);
+    }
 }

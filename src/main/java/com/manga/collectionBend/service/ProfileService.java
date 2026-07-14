@@ -5,8 +5,10 @@ import com.manga.collectionBend.auth.entities.UserRole;
 import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.auth.utils.AuthResponse;
 import com.manga.collectionBend.dto.ApiResponse;
+import com.manga.collectionBend.dto.ChangePwdRequest;
 import com.manga.collectionBend.dto.ProfileRequest;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,9 +19,11 @@ import java.util.Optional;
 @Service
 public class ProfileService {
     private final UserRepo userRepo;
+    private final PasswordEncoder passwordEncoder;
 
-    public ProfileService(UserRepo userRepo) {
+    public ProfileService(UserRepo userRepo, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     //    Get Single User data Api service method
@@ -100,5 +104,31 @@ public class ProfileService {
         } else {
             return ApiResponse.error("User not found with id: " + userId);
         }
+    }
+
+    public ApiResponse<String> changePwdHandler(Integer userId, ChangePwdRequest changePwdRequest) {
+
+        // check if user exists or not
+        var existingUser = userRepo.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with provided userid:" + userId));
+
+        // validate old password matches the one stored in DB
+//        here decoding of old pwd is not needed because passwordEncoder has the .matches() method which automatically converts incoming request-oldPwd and compares it with stored pwd
+        if (!passwordEncoder.matches(changePwdRequest.getOldPwd(), existingUser.getPassword())) {
+            return ApiResponse.error("Old/Current password is incorrect");
+        }
+
+        // prevent reusing the same password
+        if (passwordEncoder.matches(changePwdRequest.getNewPwd(), existingUser.getPassword())) {
+            return ApiResponse.error("New password must be different from old password");
+        }
+
+        // encode and set new password
+        existingUser.setPassword(passwordEncoder.encode(changePwdRequest.getNewPwd()));
+
+        // save updated user
+        userRepo.save(existingUser);
+
+        return ApiResponse.success("Password changed successfully");
     }
 }
