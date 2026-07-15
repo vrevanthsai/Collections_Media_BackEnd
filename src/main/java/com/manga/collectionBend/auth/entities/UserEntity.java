@@ -77,6 +77,10 @@ public class UserEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
+//  Suspend column where false/0 is user's account is active and true/1 is user's account is suspended where that user can't access any of our backend Apis incluingg Auth Apis
+    @Column(name = "suspended", nullable = false, columnDefinition = "boolean default false")
+    private boolean suspended = false; // its default value for all user creations will be false until Admin changes it later
+
 //   User Profile-pic/Avatar image/file vars
     private String imageName;
     private String imageType;
@@ -165,6 +169,14 @@ public class UserEntity implements UserDetails {
 
     public void setImageData(byte[] imageData) {
         this.imageData = imageData;
+    }
+
+    public boolean isSuspended() {
+        return suspended;
+    }
+
+    public void setSuspended(boolean suspended) {
+        this.suspended = suspended;
     }
 
     //    Abstract Methods of UserDetails Interface

@@ -33,4 +33,13 @@ public class AdminController {
     public ResponseEntity<List<UserDto>> searchUser(@PathVariable String searchValue){
         return ResponseEntity.ok(adminService.searchUserHandler(searchValue));
     }
+
+//    Put- Suspend/Activate User account Api
+//    Here- userAccountId- is required User's userId(we already have userId being using above in parentMapping- so we use new)
+//    and suspendValue- is String Value- where if value is equal to "suspend" then in DB it will be marked as True
+//    and if value is "activate" then in DB it will be marked as False(default value)
+    @PutMapping("/suspend-user/{userAccountId}/{suspendValue}")
+    public ResponseEntity<String> suspendUser(@PathVariable Integer userAccountId, @PathVariable String suspendValue){
+        return ResponseEntity.ok(adminService.suspendUserHandler(userAccountId, suspendValue));
+    }
 }
