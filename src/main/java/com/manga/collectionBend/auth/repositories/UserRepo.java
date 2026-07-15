@@ -26,4 +26,9 @@ public interface UserRepo extends JpaRepository<UserEntity, Integer> {
     void updatePassword(String email, String newPassword);
 
     UserEntity findByUniqueUsername(String username);
+
+//    here ?1 is searchValue which in frontend in Admin-apis- Admin does search user by either their username or email and both columns has only unique values in userTable in DB
+//    only use Entity class var- names only not column names iin DB
+    @Query("select user from UserEntity user where user.uniqueUsername = ?1 or user.email = ?1")
+    UserEntity findByUsernameOrEmail(String searchValue);
 }
