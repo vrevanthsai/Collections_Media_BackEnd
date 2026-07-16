@@ -1,6 +1,5 @@
 package com.manga.collectionBend.controllers;
 
-import com.manga.collectionBend.dto.CollectionDto;
 import com.manga.collectionBend.dto.UserDto;
 import com.manga.collectionBend.service.AdminService;
 import org.springframework.http.ResponseEntity;
@@ -41,5 +40,11 @@ public class AdminController {
     @PutMapping("/suspend-user/{userAccountId}/{suspendValue}")
     public ResponseEntity<String> suspendUser(@PathVariable Integer userAccountId, @PathVariable String suspendValue){
         return ResponseEntity.ok(adminService.suspendUserHandler(userAccountId, suspendValue));
+    }
+
+//    Admin based- Delete User Api
+    @DeleteMapping("/delete-user/{userAccountId}")
+    public ResponseEntity<String> deleteUser(@PathVariable Integer userAccountId){
+        return ResponseEntity.ok(adminService.deleteUserHandler(userAccountId));
     }
 }

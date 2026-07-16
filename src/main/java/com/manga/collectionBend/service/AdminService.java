@@ -28,6 +28,8 @@ public class AdminService {
                     user.getName(),
                     user.getUniqueUsername(),
                     user.getEmail(),
+                    user.getRole(),
+                    user.isSuspended(),
                     user.getAddedDate()
             );
             userDtos.add(userDto);
@@ -47,6 +49,8 @@ public class AdminService {
                     user.getName(),
                     user.getUniqueUsername(),
                     user.getEmail(),
+                    user.getRole(),
+                    user.isSuspended(),
                     user.getAddedDate()
             );
             userDtos.add(userDto);
@@ -79,5 +83,17 @@ public class AdminService {
             return "Incorrect suspendValue give- only send with suspend or activate";
         }
 
+    }
+
+//    This Admin based- User Delete undergoes OTP verification process
+    public String deleteUserHandler(Integer userAccountId) {
+        // check if user exists or not
+        var existingUser = userRepo.findById(userAccountId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with provided userid:" + userAccountId));
+        String username = existingUser.getUniqueUsername();
+
+//        Delete user - deletes user by matching its existing userEntity record data in Table(not by userID)
+        userRepo.delete(existingUser);
+        return "User Deleted Successfully with Username "+ username;
     }
 }

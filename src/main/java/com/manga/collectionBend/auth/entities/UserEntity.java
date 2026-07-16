@@ -1,5 +1,7 @@
 package com.manga.collectionBend.auth.entities;
 
+import com.manga.collectionBend.entities.CategoryEntity;
+import com.manga.collectionBend.entities.CollectionEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -8,6 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -61,7 +64,7 @@ public class UserEntity implements UserDetails {
 //     we store refresh tokens in DB of user table to avoid multiple user re-logins for some duration
 //    onetoone is for mapping two tables with each other
 //    "user" is var name from other table-from RefreshToken- both must have same name
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private RefreshToken refreshToken;
 
 //    mapping ForgotPassword entity with User entity(Parent-Table)
@@ -69,7 +72,7 @@ public class UserEntity implements UserDetails {
 //    private ForgotPassword forgotPassword;
 
 //   ForgotPassword field/column data should be deleted automatically from Users-table when that user resets password
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "forgot_password_id")
     private ForgotPassword forgotPassword;
 
@@ -86,6 +89,15 @@ public class UserEntity implements UserDetails {
     private String imageType;
     @Lob
     private byte[] imageData;
+
+//    THis 2 vars are only used for Auto- syncing both parent and child tables which is used for Auto-Deletion
+//    where we dont need to manually store any data into this 2 vars- they get automatically stored and referred when other(owning side) stores this UserEntity as their foreign-key
+    // UserEntity — inverse side
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CategoryEntity> categories = new ArrayList<>();
+// here userId is the var name used in CollectionEntity as mapped to this UserEntity- both must have same name
+    @OneToMany(mappedBy = "userId", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CollectionEntity> collections = new ArrayList<>();
 
     public Integer getUserId() {
         return userId;
@@ -177,6 +189,22 @@ public class UserEntity implements UserDetails {
 
     public void setSuspended(boolean suspended) {
         this.suspended = suspended;
+    }
+
+    public List<CategoryEntity> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<CategoryEntity> categories) {
+        this.categories = categories;
+    }
+
+    public List<CollectionEntity> getCollections() {
+        return collections;
+    }
+
+    public void setCollections(List<CollectionEntity> collections) {
+        this.collections = collections;
     }
 
     //    Abstract Methods of UserDetails Interface
