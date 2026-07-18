@@ -11,17 +11,20 @@ public class AuthResponse {
     private String name;
     private String username;
     private String email;
+    private String addedDate;
+    private String imagename;
 
 //        NOTE - TRY TO INCLUDE SOME User data fields also while sending Response from Service to Controller-API to Client(fetching this api)
 
 
-    public AuthResponse(String accessToken, String refreshToken,Integer userId, String name, String username, String email) {
+    public AuthResponse(String accessToken, String refreshToken,Integer userId, String name, String username, String email, String addedDate) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.userId = userId;
         this.name = name;
         this.username = username;
         this.email = email;
+        this.addedDate = addedDate;
     }
 
     public AuthResponse(){}
@@ -74,6 +77,22 @@ public class AuthResponse {
         this.email = email;
     }
 
+    public String getAddedDate() {
+        return addedDate;
+    }
+
+    public void setAddedDate(String addedDate) {
+        this.addedDate = addedDate;
+    }
+
+    public String getImagename() {
+        return imagename;
+    }
+
+    public void setImagename(String imagename) {
+        this.imagename = imagename;
+    }
+
     /* =======================
        Builder- manual implementation because lombok- @Builder is not working
        - builder() is used to create objects step-by-step used for Very readable
@@ -93,6 +112,8 @@ public class AuthResponse {
         private String name;
         private String username;
         private String email;
+        private String addedDate;
+        private String imagename;
 
 
         private Builder() {
@@ -128,6 +149,16 @@ public class AuthResponse {
             return this;
         }
 
+        public Builder addedDate(String addedDate) {
+            this.addedDate = addedDate;
+            return this;
+        }
+
+        public Builder imagename(String imagename) {
+            this.imagename = imagename;
+            return this;
+        }
+
         public AuthResponse build() {
             AuthResponse response = new AuthResponse();
             response.accessToken = this.accessToken;
@@ -136,6 +167,8 @@ public class AuthResponse {
             response.name = this.name;
             response.username = this.username;
             response.email = this.email;
+            response.addedDate = this.addedDate;
+            response.imagename = this.imagename;
             return response;
         }
     }

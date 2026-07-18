@@ -47,6 +47,12 @@ public class AuthService {
             return ApiResponse.error("Account already exists with email: " + registerRequest.getEmail());
         }
 
+//        Validation check to prevent users to create accounts with already existing UserNames
+        UserEntity existingUserNameUser = userRepo.findByUniqueUsername(registerRequest.getUsername());
+        if(existingUserNameUser != null){
+            return ApiResponse.error("Username already exists with username: " + registerRequest.getUsername() + ", try with new username!!");
+        }
+
 //      builder() is used to create objects step-by-step used for Very readable
 //        or just use new UserEntity(registerRequest.getName(),...)-constructor to create objects Normally
 //        registerRequest(is like DAO object of register) var has Client-input data coming from AuthController
@@ -55,6 +61,7 @@ public class AuthService {
                 .email(registerRequest.getEmail())
                 .username(registerRequest.getUsername())
                 .password(passwordEncoder.encode(registerRequest.getPassword())) // we encode the raw pwd from client and store that in DB
+                .addedDate(registerRequest.getAddedDate())
                 .role(UserRole.USER) // by Default - All Nwe User-Registers will have Role as USER-later it will be changed to ADMIN- change it directly from MySql workbench or create a separate api
                 .build();
 
@@ -133,7 +140,9 @@ public class AuthService {
                 .userId(user.getUserId())
                 .name(user.getName())
                 .email(user.getEmail())
+                .addedDate(user.getAddedDate())
                 .username(user.getUniqueUsername()) // sending user-entered username field data - not email
+                .imagename(user.getImageName())
                 .build();
 
         return ApiResponse.success(authResponse);

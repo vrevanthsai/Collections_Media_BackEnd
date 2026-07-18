@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 // this file contains all Auth-APIs endpoints
 @RestController
@@ -82,4 +83,23 @@ public class AuthController {
                 categoryService.getDefaultCategories()
         );
     }
+
+//    Request to Activate User account Api from suspended account status - where Admin suspend this user
+//    and Admin- sees the User's activate request in Admin's Notification page to re-activate that suspended User account - using /suspend-user Admin api
+//    this api will not be blocked by either loginFilter or new SuspendedUserFilter
+//    THIS API WILL BE BUILD WHEN NOTIFICATION FLOW STARTS =====
+
+    @PostMapping("/requestAccountActivate/user/{userId}")
+//    Here- request var - contains a requesting msg from that Suspended User to - type and send that "I-am-sorry" as input to backend
+//    and then only request gets added to Admin Notification array which Admin can see in frontend
+    public ResponseEntity<String> requestAccountActivate(@RequestBody String request,
+                                                         @PathVariable("userId") Integer userId){
+//        Add service method below later- when Notification flow starts ==
+        if(Objects.equals(request, "I-am-sorry")){
+            return ResponseEntity.ok("You request received and it will be reviewed and then only it wll be activated");
+        } else {
+            return ResponseEntity.badRequest().body("Please Type correct- I-am-sorry request message, or else request will not be sent to Admin!!");
+        }
+    }
+
 }

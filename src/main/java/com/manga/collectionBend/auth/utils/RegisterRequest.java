@@ -14,15 +14,17 @@ public class RegisterRequest {
     @NotBlank(message = "The password field can't be blank")
     @Size(min = 5, message = "The password must have at least 5 characters")
     private String password;
+    private String addedDate;
 
 //    Categories selected by User on registering(initial preferences
     private List<String> selectedCategories;
 
-    public RegisterRequest(String name, String email, String username, String password) {
+    public RegisterRequest(String name, String email, String username, String password, String addedDate) {
         this.name = name;
         this.email = email;
         this.username = username;
         this.password = password;
+        this.addedDate = addedDate;
     }
     
     public RegisterRequest(){}
@@ -67,7 +69,15 @@ public class RegisterRequest {
         this.selectedCategories = selectedCategories;
     }
 
-/* =======================
+    public String getAddedDate() {
+        return addedDate;
+    }
+
+    public void setAddedDate(String addedDate) {
+        this.addedDate = addedDate;
+    }
+
+    /* =======================
        Builder- manual implementation because lombok- @Builder is not working
        - builder() is used to create objects step-by-step used for Very readable
        - or just use new ClassName()-constructor to create objects Normally
@@ -84,6 +94,7 @@ public class RegisterRequest {
         private String email;
         private String username;
         private String password;
+        private String addedDate;
 
         private Builder() {
         }
@@ -108,12 +119,18 @@ public class RegisterRequest {
             return this;
         }
 
+        public Builder addedDate(String addedDate) {
+            this.addedDate = addedDate;
+            return this;
+        }
+
         public RegisterRequest build() {
             RegisterRequest request = new RegisterRequest();
             request.name = this.name;
             request.email = this.email;
             request.username = this.username;
             request.password = this.password;
+            request.addedDate = this.addedDate;
             return request;
         }
     }

@@ -50,17 +50,20 @@ public class CollectionServiceImpl implements CollectionService{
 
     @Override
     public ApiResponse<CollectionDto> addCollection(CollectionDto collectionDto, MultipartFile file) throws IOException {
-//        if imageName of collection already exists in our images folder which was uploaded in past
+//        to add userReference data into Collection table- not userId-Integer
+        UserEntity user = userRepo.findById(collectionDto.getUserId())
+                .orElseThrow();
+        //  Add userId to path - to store images separately per user then duplications or conflicts will not happen
+        String newPath = path + File.separator + user.getUserId(); // userId-column is unique per users and does not have any special characters
+        //        image file duplication prevention validation
+        //        if imageName of collection already exists in our images folder which was uploaded in past
 //        and again user tries to upload same image or different image with same name then we send error
 //        to make him try with another imageName, so that no duplication happens
-        if(file != null && !file.isEmpty() && Files.exists(Paths.get(path + File.separator + file.getOriginalFilename()))){
+        if(file != null && !file.isEmpty() && Files.exists(Paths.get(newPath + File.separator + file.getOriginalFilename()))){
 //            throw new FileExistsException("File name already exists! Please try with another file name!");
             return ApiResponse.error("File name already exists! Please try with another file name! - " + file.getOriginalFilename());
         }
 
-        //        to add userReference data into Collection table- not userId-Integer
-        UserEntity user = userRepo.findById(collectionDto.getUserId())
-                .orElseThrow();
 //        Validation to prevent duplicate data entries with same collection name
         List<CollectionEntity> collections = collectionRepo.findByUserId(user);
         // Check for duplicate category name (case-insensitive) to prevent duplicate data creations
@@ -76,7 +79,7 @@ public class CollectionServiceImpl implements CollectionService{
 //        only store img- if file is sent from frontend - because img field is optional
         if(file != null && !file.isEmpty()){
             //        upload the file -> path comes from properties and file from controller
-            uploadedFileName = fileService.uploadFile(path,file);
+            uploadedFileName = fileService.uploadFile(newPath,file);
 
 //        set the value of field 'imageName' in collectionDto- if file is there
             collectionDto.setImagename(uploadedFileName);
@@ -110,10 +113,11 @@ public class CollectionServiceImpl implements CollectionService{
 //        and if it exists then it updates that record of ID
         CollectionEntity savedCollection = collectionRepo.save(collection);
 
+        int userId = user.getUserId();
         String collectionUrl = ""; // send empty string as img path if collection does not have image-file
         if(file != null && !file.isEmpty()){
             //  if image-file is there then generate the CollectionImage URL to send to client- it is an API(image retrieve) from fileService
-            collectionUrl = baseUrl + "/file/" + uploadedFileName;
+            collectionUrl = baseUrl + "/file/" + uploadedFileName +"/userId/" + userId;
         }
 
 //        map collectionEntity object to DTO object and return it
@@ -142,10 +146,11 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionEntity collection = collectionRepo.findById(collectionId)
                 .orElseThrow(() -> new CollectionNotFoundExpception("Collection not found with id = " + collectionId));
 
+        int userId = collection.getUserId().getUserId();
         String collectionUrl = "";
         if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
             //        generate imageURL
-            collectionUrl = baseUrl + "/file/" + collection.getImagename(); // if imageName path exists in DB then create a Url path to send to Client
+            collectionUrl = baseUrl + "/file/" + collection.getImagename() +"/userId/" + userId; // if imageName path exists in DB then create a Url path to send to Client
         }
 
 //        map to collectionDto object and return it
@@ -178,9 +183,10 @@ public class CollectionServiceImpl implements CollectionService{
 //        map to CollectionDto object
         for(CollectionEntity collection : collections){
             String collectionUrl = "";
+            int userId = collection.getUserId().getUserId();
             if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
                 //        generate imageURL
-                collectionUrl = baseUrl + "/file/" + collection.getImagename(); // if imageName path exists in DB then create a Url path to send to Client
+                collectionUrl = baseUrl + "/file/" + collection.getImagename() +"/userId/" + userId; // if imageName path exists in DB then create a Url path to send to Client
             }
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
@@ -217,7 +223,7 @@ public class CollectionServiceImpl implements CollectionService{
             String collectionUrl = "";
             if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
                 //        generate imageURL
-                collectionUrl = baseUrl + "/file/" + collection.getImagename(); // if imageName path exists in DB then create a Url path to send to Client
+                collectionUrl = baseUrl + "/file/" + collection.getImagename() +"/userId/" + userId; // if imageName path exists in DB then create a Url path to send to Client
             }
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
@@ -241,7 +247,13 @@ public class CollectionServiceImpl implements CollectionService{
 
     @Override
     public ApiResponse<CollectionDto> updateCollection(Integer collectionId, CollectionDto collectionDto, MultipartFile file) throws IOException {
-        if(file != null && !file.isEmpty() && Files.exists(Paths.get(path + File.separator + file.getOriginalFilename()))){
+        //        to add userReference data into Collection table- not userId-Integer
+        UserEntity user = userRepo.findById(collectionDto.getUserId())
+                .orElseThrow();
+        //            Add userID to path - to store images separately per user then duplications or conflicts will not happen
+        String newPath = path + File.separator + user.getUserId(); // userId-column is unique per users and does not have any special characters
+//        image file duplication prevention validation
+        if(file != null && !file.isEmpty() && Files.exists(Paths.get(newPath + File.separator + file.getOriginalFilename()))){
 //            throw new FileExistsException("File name already exists! Please try with another file name!");
             return ApiResponse.error("File name already exists! Please try with another file name! - " + file.getOriginalFilename());
         }
@@ -249,9 +261,6 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionEntity existingCollection = collectionRepo.findById(collectionId)
                 .orElseThrow(() -> new CollectionNotFoundExpception("Collection not found with id = " + collectionId));
 
-        //        to add userReference data into Collection table- not userId-Integer
-        UserEntity user = userRepo.findById(collectionDto.getUserId())
-                .orElseThrow();
 
 //       only prevent duplication for when updating collection name to existing collection name
 //        means- if existingCollection name is not equals to user-request-Dto name then duplication logic runs below-lines or else it will be skipped(because both are same)
@@ -275,10 +284,10 @@ public class CollectionServiceImpl implements CollectionService{
         if(file != null){
             if(!Objects.equals(fileName, "")){
                 //            deleting old image
-                Files.deleteIfExists(Paths.get(path + File.separator + fileName));
+                Files.deleteIfExists(Paths.get(newPath + File.separator + fileName));
             }
 //            uploading new image
-            fileName = fileService.uploadFile(path, file);
+            fileName = fileService.uploadFile(newPath, file);
         }
 
 //        set new imageName to collectionDto object
@@ -311,9 +320,10 @@ public class CollectionServiceImpl implements CollectionService{
 
 //        generate imageURL for it
         String collectionUrl = "";
+        int userId = updatedCollection.getUserId().getUserId();
         if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
             //        generate imageURL
-            collectionUrl = baseUrl + "/file/" + collection.getImagename(); // if imageName path exists in DB then create a Url path to send to Client
+            collectionUrl = baseUrl + "/file/" + collection.getImagename() +"/userId/" + userId; // if imageName path exists in DB then create a Url path to send to Client
         }
 
 //        map to CollectionDto for it
@@ -341,12 +351,14 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionEntity existingCollection = collectionRepo.findById(collectionId)
                 .orElseThrow(() -> new CollectionNotFoundExpception("Collection not found with id = " + collectionId));
         String collectionName = existingCollection.getName();
-//         Integer id = existingCollection.getCollectionId();
+        int userId = existingCollection.getUserId().getUserId();
 
 //        only delete file/imagge in CollectionImages-backend-folder if in Db it has imageName stored(means user given img while creating this collection) or else imageName="" empty(means user did no give any img which does not need deleting anything)
         if(!Objects.equals(existingCollection.getImagename(), "")){
+           //  Add userId to path - to store images separately per user then duplications or conflicts will not happen
+            String newPath = path + File.separator + userId; // userId-column is unique per users and does not have any special characters
             //        delete the file/image associated with this object which will be deleted from table/db
-            Files.deleteIfExists(Paths.get(path + File.separator + existingCollection.getImagename()));
+            Files.deleteIfExists(Paths.get(newPath + File.separator + existingCollection.getImagename())); // deletes empty folder or single file once
         }
 
         //        delete the collection object from record/table
@@ -373,7 +385,8 @@ public class CollectionServiceImpl implements CollectionService{
 //        iterate through the list and generate imageURL for each collection obj of retrieved data objects from DB and
 //        map to CollectionDto object
         for(CollectionEntity collection : collections){
-            String collectionUrl = baseUrl + "/file/" + collection.getImagename();
+            int userId = collection.getUserId().getUserId();
+            String collectionUrl = baseUrl + "/file/" + collection.getImagename() +"/userId/" + userId;
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
                     collection.getName(),
@@ -425,7 +438,8 @@ public class CollectionServiceImpl implements CollectionService{
 //        iterate through the list and generate imageURL for each collection obj of retrieved data objects from DB and
 //        map to CollectionDto object
         for(CollectionEntity collection : collections){
-            String collectionUrl = baseUrl + "/file/" + collection.getImagename();
+            int userId = collection.getUserId().getUserId();
+            String collectionUrl = baseUrl + "/file/" + collection.getImagename() +"/userId/" + userId;
             CollectionDto collectionDto = new CollectionDto(
                     collection.getCollectionId(),
                     collection.getName(),
