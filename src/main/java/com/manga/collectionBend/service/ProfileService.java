@@ -1,27 +1,38 @@
 package com.manga.collectionBend.service;
 
 import com.manga.collectionBend.auth.entities.UserEntity;
-import com.manga.collectionBend.auth.entities.UserRole;
 import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.auth.utils.AuthResponse;
 import com.manga.collectionBend.dto.ApiResponse;
 import com.manga.collectionBend.dto.ChangePwdRequest;
 import com.manga.collectionBend.dto.ProfileRequest;
+import com.manga.collectionBend.repositories.CollectionRepo;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.stream.Stream;
+
 
 @Service
 public class ProfileService {
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
 
-    public ProfileService(UserRepo userRepo, PasswordEncoder passwordEncoder) {
+    @Value("${project.collectionImage}")
+    private String path;
+
+    public ProfileService(UserRepo userRepo, PasswordEncoder passwordEncoder, CollectionRepo collectionRepo) {
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
     }
@@ -52,7 +63,7 @@ public class ProfileService {
     // Update user api service method
     public ApiResponse<AuthResponse> updateUser(Integer userId, ProfileRequest profileRequest, MultipartFile file) throws IOException {
 //        check if user exists or not
-        var existingUser = userRepo.findById(profileRequest.getUserId()).orElseThrow(() -> new UsernameNotFoundException("User not found with provided userid:" + userId));
+        var existingUser = userRepo.findById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found with provided userid:" + userId));
 
         //        Validation check to prevent users to update his account with already existing UserNames
         UserEntity existingUserNameUser = userRepo.findByUniqueUsername(profileRequest.getUsername());
@@ -66,29 +77,19 @@ public class ProfileService {
         }
 
         if(existingUser.getUserId() != null){
-//            create a userEntity object to send to userRepo
-            var user = UserEntity.builder()
-                    .userId(userId) // not editable
-                    .email(existingUser.getEmail())  // not editable
-                    .name(profileRequest.getName()) // editable
-                    .username(profileRequest.getUsername()) // editable
-                    .password(existingUser.getPassword()) // same previous pwd- no changes
-                    .addedDate(existingUser.getAddedDate())  // not editable
-                    .role(existingUser.getRole())  // not editable
-                    .imageData(existingUser.getImageData()) // same previous imageData if used already added or else null
-                    .imageName(existingUser.getImageName())
-                    .imageType(existingUser.getImageType())
-                    .build();
+            // mutate the existing managed entity directly — don't rebuild it
+            existingUser.setName(profileRequest.getName());
+            existingUser.setUniqueUsername(profileRequest.getUsername());
             //        only store img- if file is sent from frontend - because img field is optional
             if(file != null && !file.isEmpty()) {
 //            Assigning Image var values to user entity object if image/file exists only
-                user.setImageName(file.getOriginalFilename());
-                user.setImageType(file.getContentType());
-                user.setImageData(file.getBytes());
+                existingUser.setImageName(file.getOriginalFilename());
+                existingUser.setImageType(file.getContentType());
+                existingUser.setImageData(file.getBytes());
             }
 
 //            save()- updates a table record/row if provided ID exists or else creates new record/row in that table
-            UserEntity updatedUser = userRepo.save(user);
+            UserEntity updatedUser = userRepo.save(existingUser);
 
             AuthResponse authResponse = AuthResponse.builder()
                     .userId(updatedUser.getUserId())
@@ -130,5 +131,47 @@ public class ProfileService {
         userRepo.save(existingUser);
 
         return ApiResponse.success("Password changed successfully");
+    }
+
+    public String deleteMyAccountHandler(Integer userId) throws IOException {
+        // check if user exists or not
+        var existingUser = userRepo.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with provided userid:" +  userId));
+        String username = existingUser.getUniqueUsername();
+
+        // Delete/Remove All internally Stored Collection Images before deleting all User related data
+//        By Deleting entire userId folder inside CollectionImages main folder where all that Deleted User's images are stored instead of deleting each image separately
+        String fullFolderPath = path + File.separator + userId;  // userId-column is unique per users and does not have any special characters
+        deleteUserFolder(fullFolderPath); // already-complete path passed in
+
+//        Delete user - deletes user by matching its existing userEntity record data in Table(not by userID)
+//        and all related records in other tables automatically using Hibernate BiDirectional relationship syncing
+        userRepo.delete(existingUser);
+        return "Your Account Deleted Successfully with Username "+ username;
+    }
+
+//    This method used for Deleting User's stored images files in his userId based folder but deleting entire folder is not possible,
+//    so first we use this method to delete each stored image/files first then delete entire file to make to clean when User's data is deleted from DB
+    private void deleteUserFolder(String fullPath) throws IOException {
+        if (fullPath == null) {
+            return; // nothing to delete
+        }
+
+        Path folderPath = Paths.get(fullPath); // just use it directly, no appending
+
+        if (!Files.exists(folderPath)) {
+            return; // folder doesn't exist, nothing to do
+        }
+
+        try (Stream<Path> walk = Files.walk(folderPath)) {
+            walk.sorted(Comparator.reverseOrder()) // delete children before parent
+                    .forEach(p -> {
+                        try {
+                            Files.delete(p); // deleting each file in folder first then entire folder
+                        } catch (IOException e) {
+                            throw new UncheckedIOException("Failed to delete: " + p, e);
+                        }
+                    });
+        }
     }
 }

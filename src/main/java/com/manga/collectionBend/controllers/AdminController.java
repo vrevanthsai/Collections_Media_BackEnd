@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -44,7 +45,7 @@ public class AdminController {
 
 //    Admin based- Delete User Api
     @DeleteMapping("/delete-user/{userAccountId}")
-    public ResponseEntity<String> deleteUser(@PathVariable Integer userAccountId){
+    public ResponseEntity<String> deleteUser(@PathVariable Integer userAccountId) throws IOException {
         return ResponseEntity.ok(adminService.deleteUserHandler(userAccountId));
     }
 }

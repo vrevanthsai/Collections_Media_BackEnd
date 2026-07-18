@@ -69,9 +69,6 @@ public class ProfileController {
         }
     }
 
-
-//    Delete Single User API
-
 //    Change User Password Api
     @PutMapping("/change-password")
     public ResponseEntity<ApiResponse<String>> changePassword(@PathVariable Integer userId, @RequestBody ChangePwdRequest changePwdRequest){
@@ -82,5 +79,11 @@ public class ProfileController {
         }
 //        send success=true, with AuthResponse data object when no errors are there
         return ResponseEntity.ok(response);
+    }
+
+//    Delete Single User API
+    @DeleteMapping("/delete-my-account")
+    public ResponseEntity<String> deleteMyAccount(@PathVariable Integer userId) throws IOException { // userId from parent Mapping path
+        return ResponseEntity.ok(profileService.deleteMyAccountHandler(userId));
     }
 }
