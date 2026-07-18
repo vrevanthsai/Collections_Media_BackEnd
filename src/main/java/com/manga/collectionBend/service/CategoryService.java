@@ -8,8 +8,13 @@ import com.manga.collectionBend.entities.CollectionEntity;
 import com.manga.collectionBend.repositories.CategoryRepo;
 import com.manga.collectionBend.repositories.CollectionRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,6 +25,9 @@ public class CategoryService {
     @Autowired
     private UserRepo userRepo;
     private final CollectionRepo collectionRepo;
+
+    @Value("${project.collectionImage}")
+    private String path;
 
 //    Default categories data or Admin can later edit them either manually or by using Post-Api
     private static final List<String> DEFAULT_CATEGORIES = List.of(
@@ -121,27 +129,34 @@ public class CategoryService {
                 .orElseThrow(() -> new RuntimeException("Category not found with id = " + categoryId));
 
         String categoryName = existingCategory.getCategoryName();
+        int userId = existingCategory.getUser().getUserId();
 //        Logic to prevent Category Deletion if that category has some created collections which are linked/mapped to this wanted category
 //        here when Category-record/row will act like parent record which is referred by foreign-key in a Collection-record/row(child) -
 //        so delection of parent record(category) will not work until its referred child record in Collection table is deleted first then only deletion of category-record will work next
         List<CollectionEntity> categoryBasedCollections = collectionRepo.findByCategory(existingCategory);
 
-        if(categoryBasedCollections.isEmpty()){
-            categoryRepo.delete(existingCategory);
-            CategoryDeleteResponse categoryDeleteResponse = new CategoryDeleteResponse();
-            categoryDeleteResponse.setSuccess(Boolean.TRUE);
-            categoryDeleteResponse.setMessage("Category deleted successfully with name = " + categoryName);
-            return categoryDeleteResponse;
-        } else {
-            CategoryDeleteResponse categoryDeleteResponse = new CategoryDeleteResponse();
-            categoryDeleteResponse.setSuccess(Boolean.FALSE);
-            categoryDeleteResponse.setMessage(
-                    "This " + categoryName + " Category has "+ categoryBasedCollections.toArray().length
-                            +" collections created with it, so until the collections linked to this Category are deleted, we can't delete it, please delete them all first and come back to delete this category next!!!"
-                            +"Tip- 1) you can find the linked collections of a Category in Home page where you use the filters options of category and find all the linked collections of a Category in Home page or"
-                            +" 2) you can use Edit option to change the category name instead of deleting it."
-            );
-            return categoryDeleteResponse;
+//        delete category based collections images logic to delete each collection image separately-
+//        - because we cant delete entire userId-main folder of User just to delete few collectionImages which are only linked to this CategoryId
+        if (categoryBasedCollections != null && !categoryBasedCollections.isEmpty()) {
+            categoryBasedCollections.forEach(collection -> {
+                //        only delete file/imagge in CollectionImages-backend-folder if in Db it has imageName stored(means user given img while creating this collection) or else imageName="" empty(means user did no give any img which does not need deleting anything)
+                if(collection.getImagename() != null && !Objects.equals(collection.getImagename(), "")){
+                    String newPath = path + File.separator + userId;
+                    //        delete the file/image associated with this object which will be deleted from table/db
+                    try {
+                        Files.deleteIfExists(Paths.get(newPath + File.separator + collection.getImagename())); // deletes empty folder or single file once
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
         }
+
+//  Here category record data will get deleted and automatically its linked collection records will also get deleted by Hibernate-Cascade.ALL
+        categoryRepo.delete(existingCategory);
+        CategoryDeleteResponse categoryDeleteResponse = new CategoryDeleteResponse();
+        categoryDeleteResponse.setSuccess(Boolean.TRUE);
+        categoryDeleteResponse.setMessage("Category deleted successfully with name = " + categoryName);
+        return categoryDeleteResponse;
     }
 }
