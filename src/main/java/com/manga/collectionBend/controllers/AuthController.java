@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 // this file contains all Auth-APIs endpoints
 @RestController
@@ -89,12 +90,16 @@ public class AuthController {
 //    THIS API WILL BE BUILD WHEN NOTIFICATION FLOW STARTS =====
 
     @PostMapping("/requestAccountActivate/user/{userId}")
-//    Here- request var - contains a requesting msg from that Suspended User to - type and send that "I am sorry" as input to backend
+//    Here- request var - contains a requesting msg from that Suspended User to - type and send that "I-am-sorry" as input to backend
 //    and then only request gets added to Admin Notification array which Admin can see in frontend
     public ResponseEntity<String> requestAccountActivate(@RequestBody String request,
                                                          @PathVariable("userId") Integer userId){
 //        Add service method below later- when Notification flow starts ==
-        return ResponseEntity.ok("You request received and it will be reviewed and then only it wll be activated");
+        if(Objects.equals(request, "I-am-sorry")){
+            return ResponseEntity.ok("You request received and it will be reviewed and then only it wll be activated");
+        } else {
+            return ResponseEntity.badRequest().body("Please Type correct- I-am-sorry request message, or else request will not be sent to Admin!!");
+        }
     }
 
 }

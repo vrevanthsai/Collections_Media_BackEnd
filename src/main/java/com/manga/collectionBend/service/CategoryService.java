@@ -95,14 +95,15 @@ public class CategoryService {
 //        UserId Validation check- to see if same user is trying to update his data or some one
 //        if same - we update or not same - we throw error
         if(Objects.equals(categoryRequest.getUserId(), existingCategory.getUser().getUserId())) {
-            CategoryEntity categoryEntity = new CategoryEntity();
-//            setting values to new entity object which has updated categoryName value and remaining 2 field - id and User values will be same as previous/existing category record-data
-            categoryEntity.setCategoryId(existingCategory.getCategoryId()); // providing id which will update this ID's record in table
-            categoryEntity.setCategoryName(categoryRequest.getCategoryName()); // new updated value
-            categoryEntity.setUser(existingCategory.getUser()); // old value
+            // mutate the existing managed entity directly — don't rebuild it
+//            setting values to already existing entity object which has updated categoryName value and remaining 2 field - id and User values will be same as previous/existing category record-data
+            existingCategory.setCategoryName(categoryRequest.getCategoryName()); // new updated value
 
 //        save the updated data into category table
-            CategoryEntity updatedCategory = categoryRepo.save(categoryEntity);
+//      always use existing categoryObject for updating any record data in DB- dont use separate/new CategoryEntity object/var
+//      then no relational conflicts issue(auto-delete of collection record due to adding new object instead of using existing object)
+//      will not come between this parent(category) entity and its child(collection) entity
+            CategoryEntity updatedCategory = categoryRepo.save(existingCategory);
 
             CategoryResponse dto = new CategoryResponse();
             dto.setCategoryId(updatedCategory.getCategoryId());

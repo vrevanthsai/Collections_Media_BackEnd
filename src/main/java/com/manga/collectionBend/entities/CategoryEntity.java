@@ -18,7 +18,7 @@ public class CategoryEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer categoryId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String categoryName;
 
     // CategoryEntity — owning side (has the actual @JoinColumn/FK)
