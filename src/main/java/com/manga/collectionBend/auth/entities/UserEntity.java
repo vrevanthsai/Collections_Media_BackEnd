@@ -2,6 +2,8 @@ package com.manga.collectionBend.auth.entities;
 
 import com.manga.collectionBend.entities.CategoryEntity;
 import com.manga.collectionBend.entities.CollectionEntity;
+import com.manga.collectionBend.entities.FriendConnection;
+import com.manga.collectionBend.entities.NotificationEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -90,7 +92,7 @@ public class UserEntity implements UserDetails {
     @Lob
     private byte[] imageData;
 
-//    THis 2 vars are only used for Auto- syncing both parent and child tables which is used for Auto-Deletion
+//    This 2 vars are only used for Auto- syncing both parent and child tables which is used for Auto-Deletion
 //    where we dont need to manually store any data into this 2 vars- they get automatically stored and referred when other(owning side) stores this UserEntity as their foreign-key
     // UserEntity — inverse side
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -98,6 +100,22 @@ public class UserEntity implements UserDetails {
 // here userId is the var name used in CollectionEntity as mapped to this UserEntity- both must have same name
     @OneToMany(mappedBy = "userId", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CollectionEntity> collections = new ArrayList<>();
+
+//    This 4 vars are only used for Auto - syncing and deleting FriendConnections(child) and notifications(child) automatically when user(parent) account is deleted
+//    2 references are there which points to UserEntity(parent) from both child tables
+    // --- Friend connections: user can be EITHER side ---
+    @OneToMany(mappedBy = "requester", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FriendConnection> sentFriendRequests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FriendConnection> receivedFriendRequests = new ArrayList<>();
+
+    // --- Notifications: user can be EITHER side ---
+    @OneToMany(mappedBy = "recipient", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<NotificationEntity> receivedNotifications = new ArrayList<>();
+
+    @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<NotificationEntity> triggeredNotifications = new ArrayList<>();
 
     public Integer getUserId() {
         return userId;
