@@ -3,11 +3,11 @@ package com.manga.collectionBend.service;
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.auth.utils.AuthResponse;
-import com.manga.collectionBend.dto.ApiResponse;
-import com.manga.collectionBend.dto.ChangePwdRequest;
-import com.manga.collectionBend.dto.ProfileRequest;
+import com.manga.collectionBend.dto.*;
+import com.manga.collectionBend.entities.CollectionEntity;
 import com.manga.collectionBend.repositories.CollectionRepo;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,9 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -28,13 +30,15 @@ import java.util.stream.Stream;
 public class ProfileService {
     private final UserRepo userRepo;
     private final PasswordEncoder passwordEncoder;
+    private final CollectionRepo collectionRepo;
 
     @Value("${project.collectionImage}")
     private String path;
 
-    public ProfileService(UserRepo userRepo, PasswordEncoder passwordEncoder, CollectionRepo collectionRepo) {
+    public ProfileService(UserRepo userRepo, PasswordEncoder passwordEncoder, CollectionRepo collectionRepo, CollectionRepo collectionRepo1) {
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
+        this.collectionRepo = collectionRepo1;
     }
 
     //    Get Single User data Api service method
@@ -173,5 +177,37 @@ public class ProfileService {
                         }
                     });
         }
+    }
+
+    // here searchValue- can be user's username or collection's name
+    public SearchResultDto searchUserOrCollectionHandler(String searchValue, UserEntity currentUser) {
+
+        if (searchValue == null || searchValue.isBlank()) {
+            return SearchResultDto.builder()
+                    .users(List.of())
+                    .collections(List.of())
+                    .build();
+        }
+
+        // search by username (exclude searching for yourself)
+        UserEntity user = userRepo.findByUniqueUsername(searchValue);
+        List<FriendDto> userResults = new ArrayList<>();
+        if (user != null && !user.getUserId().equals(currentUser.getUserId())) {
+            userResults.add(FriendDto.fromEntity(user));
+        }
+
+        // search within current user's own collections by name (case-insensitive partial match)
+        List<CollectionEntity> userBasedCollections = collectionRepo.findByUserId(currentUser);
+        List<CollectionSearchDto> collectionResults = userBasedCollections.stream()
+                .filter(collection -> collection.getName().toLowerCase().contains(searchValue.toLowerCase()))
+                .map(CollectionSearchDto::fromEntity)
+                .toList();
+
+//        This SearchResultDto is an object{} which has 2 properties where 1 is list for users(searched by username) and 2nd for list for collections(searched by collection's name)
+//        so that frontend - we can get/access both type of search results based on provided search value from navbar-search input value
+        return SearchResultDto.builder()
+                .users(userResults)
+                .collections(collectionResults)
+                .build();
     }
 }

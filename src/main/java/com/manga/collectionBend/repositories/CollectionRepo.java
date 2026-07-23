@@ -15,4 +15,5 @@ public interface CollectionRepo extends JpaRepository<CollectionEntity,Integer> 
 //    naming formate- findBy+CapitalFirstLetter of Field/Column name(eg-Username) or you can create a sql query to fetch data
     List<CollectionEntity> findByUserId(UserEntity userId);
     List<CollectionEntity> findByCategory(CategoryEntity category);
+    List<CollectionEntity> findByName(String name);
 }
