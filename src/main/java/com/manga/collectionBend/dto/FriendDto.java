@@ -13,6 +13,7 @@ public class FriendDto {
     private String username;
     private String name;
     private String imageName;
+    private String addedDate;
 
 //    we build the FriendDto linking UserEntity build here itself instead of declaring them in service file
     public static FriendDto fromEntity(UserEntity user) {
@@ -21,6 +22,7 @@ public class FriendDto {
                 .username(user.getUniqueUsername())
                 .name(user.getName())
                 .imageName(user.getImageName())
+                .addedDate(user.getAddedDate())
                 .build();
     }
 }

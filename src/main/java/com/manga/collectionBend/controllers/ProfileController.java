@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -98,4 +97,8 @@ public class ProfileController {
 //    create user-view api which sends basic user details for top section of User-View page
 //    and sends Collections data/list of provided userId(user) which are marked as Public for bottom section of User-View page
 //    and if that user(B) is friend of requested user(A) request to view B profile/User-View page then send Collection data which has both marked as Public and Friends
+    @GetMapping("/user-view-page/{otherUserId}")
+    public ApiResponse<UserViewDto> userViewPage(@PathVariable Integer userId, @PathVariable Integer otherUserId){ // userId is the currentUser requesting ID
+        return ApiResponse.success(profileService.userViewPageHandler(userId, otherUserId));
+    }
 }

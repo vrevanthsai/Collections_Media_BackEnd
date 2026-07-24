@@ -1,6 +1,5 @@
 package com.manga.collectionBend.service;
 
-import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.dto.ApiResponse;
 import com.manga.collectionBend.dto.FriendDto;
