@@ -36,7 +36,7 @@ public class CollectionController {
     @PostMapping("/add-collection")
 //    Both Method params - naming should be used same in FrontEnd while sending data
     public ResponseEntity<ApiResponse<CollectionDto>> addCollectionHandler(@RequestPart(value = "file", required = false) MultipartFile file, // making img/file as optional
-                                                                           @RequestPart String collectionDto) throws IOException, EmptyFileException {
+                                                                           @RequestPart String collectionDto, @PathVariable Integer userId) throws IOException, EmptyFileException {
         // it receives json/string data part and image file part from client
         // collectionDto Type will be String if it comes from FormData and,
         // it will be direct json(CollectionDto- where springboot will convert automatically from json to DTO object) if it is raw data from PostMan
@@ -48,7 +48,7 @@ public class CollectionController {
 //        }
 
         CollectionDto dto = convertToCollectionDto(collectionDto);
-        ApiResponse<CollectionDto> response = collectionService.addCollection(dto,file);
+        ApiResponse<CollectionDto> response = collectionService.addCollection(dto,file, userId);
         //        send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
         if (!response.isSuccess()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
@@ -69,8 +69,8 @@ public class CollectionController {
 //    GET-single collection api
 //    PathVariable value comes from client and both path variable and method args should be same
     @GetMapping("/{collectionId}")
-    public ResponseEntity<CollectionDto> getCollectionHandler(@PathVariable Integer collectionId){
-        return ResponseEntity.ok(collectionService.getCollection(collectionId));
+    public ResponseEntity<CollectionDto> getCollectionHandler(@PathVariable Integer collectionId, @PathVariable Integer userId){ // userId from parent-Mapping path- to prevent users to access data of other user
+        return ResponseEntity.ok(collectionService.getCollection(collectionId, userId));
     }
 
 //    GET-all collections api
@@ -91,13 +91,14 @@ public class CollectionController {
     public ResponseEntity<ApiResponse<CollectionDto>> updateCollectionHandler(@PathVariable Integer collectionId,
                                                                  @RequestPart String collectionDtoObj,
 //                                                                 Make File-part required=false because user can send new img or just null/which uses old img
-                                                                 @RequestPart(required = false) MultipartFile file) throws IOException {
+                                                                 @RequestPart(required = false) MultipartFile file,
+                                                                              @PathVariable Integer userId) throws IOException { // userId must be for updating or deleting
 //    2 RequestPart Method params - naming should be used same in FrontEnd while sending data and PutMapping-var and PathVariable-var must have same naming
         //        setting file value to null if client side file is not provided to be updated
         // Here - if new file is given then we send that to DB or we take null which means old image-file is there
         if(file == null || file.isEmpty()) file = null;
         CollectionDto collectionDto = convertToCollectionDto(collectionDtoObj);
-        ApiResponse<CollectionDto> response = collectionService.updateCollection(collectionId, collectionDto, file);
+        ApiResponse<CollectionDto> response = collectionService.updateCollection(collectionId, collectionDto, file, userId);
         //        send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
         if (!response.isSuccess()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
@@ -108,8 +109,8 @@ public class CollectionController {
     //    DELETE-API
     @DeleteMapping("/delete/{collectionId}")
 //    we should give Type-String because it returns string in service method
-    public ResponseEntity<String> deleteCollectionHandler(@PathVariable Integer collectionId) throws IOException {
-        return ResponseEntity.ok(collectionService.deleteCollection(collectionId));
+    public ResponseEntity<String> deleteCollectionHandler(@PathVariable Integer collectionId, @PathVariable Integer userId) throws IOException {
+        return ResponseEntity.ok(collectionService.deleteCollection(collectionId, userId));
     }
 
 //    Get-All collections Api with Pagination logic

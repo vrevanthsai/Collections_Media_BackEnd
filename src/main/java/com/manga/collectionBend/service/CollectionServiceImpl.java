@@ -49,9 +49,9 @@ public class CollectionServiceImpl implements CollectionService{
     }
 
     @Override
-    public ApiResponse<CollectionDto> addCollection(CollectionDto collectionDto, MultipartFile file) throws IOException {
+    public ApiResponse<CollectionDto> addCollection(CollectionDto collectionDto, MultipartFile file, Integer userId) throws IOException {
 //        to add userReference data into Collection table- not userId-Integer
-        UserEntity user = userRepo.findById(collectionDto.getUserId())
+        UserEntity user = userRepo.findById(userId)
                 .orElseThrow();
         //  Add userId to path - to store images separately per user then duplications or conflicts will not happen
         String newPath = path + File.separator + user.getUserId(); // userId-column is unique per users and does not have any special characters
@@ -113,7 +113,6 @@ public class CollectionServiceImpl implements CollectionService{
 //        and if it exists then it updates that record of ID
         CollectionEntity savedCollection = collectionRepo.save(collection);
 
-        int userId = user.getUserId();
         String collectionUrl = ""; // send empty string as img path if collection does not have image-file
         if(file != null && !file.isEmpty()){
             //  if image-file is there then generate the CollectionImage URL to send to client- it is an API(image retrieve) from fileService
@@ -126,6 +125,7 @@ public class CollectionServiceImpl implements CollectionService{
                 savedCollection.getName(),
                 savedCollection.getCategory().getCategoryId(), // Collection table has - Category table reference - inside that we get Category id field
                 savedCollection.getUserId().getUserId(),
+                savedCollection.getUserId().getUniqueUsername(),
                 savedCollection.getRating(),
                 savedCollection.getReview(),
                 savedCollection.getProgress(),
@@ -141,33 +141,39 @@ public class CollectionServiceImpl implements CollectionService{
     }
 
     @Override
-    public CollectionDto getCollection(Integer collectionId) {
+    public CollectionDto getCollection(Integer collectionId, Integer userId) {
 //        check the data in DB and if it exists, fetch the data of given ID
         CollectionEntity collection = collectionRepo.findById(collectionId)
                 .orElseThrow(() -> new CollectionNotFoundExpception("Collection not found with id = " + collectionId));
 
-        int userId = collection.getUserId().getUserId();
         String collectionUrl = "";
         if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
             //        generate imageURL
             collectionUrl = baseUrl + "/file/" + collection.getImagename() +"/userId/" + userId; // if imageName path exists in DB then create a Url path to send to Client
         }
 
-//        map to collectionDto object and return it
-        CollectionDto response = new CollectionDto(
-                collection.getCollectionId(),
-                collection.getName(),
-                collection.getCategory().getCategoryId(),
-                collection.getUserId().getUserId(),
-                collection.getRating(),
-                collection.getReview(),
-                collection.getProgress(),
-                collection.getPrivacy(),
-                collection.getAddedDate(),
-                collection.getImagename(),
-                collectionUrl
-        );
-        response.setCategoryName(collection.getCategory().getCategoryName());
+        CollectionDto response = new CollectionDto();
+        //        UserId Validation check- to see if same user is trying to access his data or some one
+        if(Objects.equals(userId, collection.getUserId().getUserId())) {
+            //        map to collectionDto object and return it
+            response = new CollectionDto(
+                    collection.getCollectionId(),
+                    collection.getName(),
+                    collection.getCategory().getCategoryId(),
+                    collection.getUserId().getUserId(),
+                    collection.getUserId().getUniqueUsername(),
+                    collection.getRating(),
+                    collection.getReview(),
+                    collection.getProgress(),
+                    collection.getPrivacy(),
+                    collection.getAddedDate(),
+                    collection.getImagename(),
+                    collectionUrl
+            );
+            response.setCategoryName(collection.getCategory().getCategoryName());
+        } else {
+            throw new IllegalStateException("You userId: "+ userId +" are not authorized to access other user's data!");
+        }
 
         return response;
     }
@@ -193,6 +199,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getName(),
                     collection.getCategory().getCategoryId(),
                     collection.getUserId().getUserId(),
+                    collection.getUserId().getUniqueUsername(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
@@ -230,6 +237,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getName(),
                     collection.getCategory().getCategoryId(),
                     collection.getUserId().getUserId(),
+                    collection.getUserId().getUniqueUsername(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
@@ -246,9 +254,9 @@ public class CollectionServiceImpl implements CollectionService{
     }
 
     @Override
-    public ApiResponse<CollectionDto> updateCollection(Integer collectionId, CollectionDto collectionDto, MultipartFile file) throws IOException {
+    public ApiResponse<CollectionDto> updateCollection(Integer collectionId, CollectionDto collectionDto, MultipartFile file, Integer userId) throws IOException {
         //        to add userReference data into Collection table- not userId-Integer
-        UserEntity user = userRepo.findById(collectionDto.getUserId())
+        UserEntity user = userRepo.findById(userId)
                 .orElseThrow();
         //            Add userID to path - to store images separately per user then duplications or conflicts will not happen
         String newPath = path + File.separator + user.getUserId(); // userId-column is unique per users and does not have any special characters
@@ -293,76 +301,75 @@ public class CollectionServiceImpl implements CollectionService{
 //        set new imageName to collectionDto object
         collectionDto.setImagename(fileName);
 
-//        map it to collection entity object
-        CollectionEntity collection = new CollectionEntity(
-                existingCollection.getCollectionId(), // providing id which will update this ID's record in table
-                collectionDto.getName(),
-                null,
-                null,
-                collectionDto.getRating(),
-                collectionDto.getReview(),
-                collectionDto.getProgress(),
-                collectionDto.getPrivacy(),
-                collectionDto.getAddedDate(),
-                collectionDto.getImagename()
-        );
+//        Update Rule - only use existingCollection object for .save() instead of creating new collectionEntity object
+//      no referring to User or Category Entity is required in Update feature because they are already
+        existingCollection.setName(collectionDto.getName());
+        existingCollection.setRating(collectionDto.getRating());
+        existingCollection.setReview(collectionDto.getReview());
+        existingCollection.setProgress(collectionDto.getProgress());
+        existingCollection.setPrivacy(collectionDto.getPrivacy());
+        existingCollection.setImagename(collectionDto.getImagename());
 
-        //      to add categoryReference data into Collection table- not categoryId-Integer
-        CategoryEntity category = categoryRepo.findById(collectionDto.getCategory())
-                .orElseThrow();
-
-        collection.setUserId(user);
-        collection.setCategory(category);
-
-//        save the updated collection object, it returns saved/updated collection object
-        // save()- will update the record where collection(entity object) has ID in it.
-        CollectionEntity updatedCollection = collectionRepo.save(collection);
+        //        UserId Validation check- to see if same user is trying to update his data or some one
+//        if same - we update or not same - we throw error
+        CollectionEntity updatedCollection;
+        if(Objects.equals(userId, existingCollection.getUserId().getUserId())) {
+            //        save the updated collection object, it returns saved/updated collection object
+            // save()- will update the record where collection(entity object) has ID in it.
+            updatedCollection = collectionRepo.save(existingCollection);
+        } else {
+            return ApiResponse.error("You userId: "+ userId +" are not authorized to update other user's data!");
+        }
 
 //        generate imageURL for it
         String collectionUrl = "";
-        int userId = updatedCollection.getUserId().getUserId();
-        if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
+        if(!Objects.equals(updatedCollection.getImagename(), "")){ // not equal to null
             //        generate imageURL
-            collectionUrl = baseUrl + "/file/" + collection.getImagename() +"/userId/" + userId; // if imageName path exists in DB then create a Url path to send to Client
+            collectionUrl = baseUrl + "/file/" + updatedCollection.getImagename() +"/userId/" + userId; // if imageName path exists in DB then create a Url path to send to Client
         }
 
 //        map to CollectionDto for it
         CollectionDto response = new CollectionDto(
-                collection.getCollectionId(),
-                collection.getName(),
-                collection.getCategory().getCategoryId(),
-                collection.getUserId().getUserId(),
-                collection.getRating(),
-                collection.getReview(),
-                collection.getProgress(),
-                collection.getPrivacy(),
-                collection.getAddedDate(),
-                collection.getImagename(),
+                updatedCollection.getCollectionId(),
+                updatedCollection.getName(),
+                updatedCollection.getCategory().getCategoryId(),
+                updatedCollection.getUserId().getUserId(),
+                updatedCollection.getUserId().getUniqueUsername(),
+                updatedCollection.getRating(),
+                updatedCollection.getReview(),
+                updatedCollection.getProgress(),
+                updatedCollection.getPrivacy(),
+                updatedCollection.getAddedDate(),
+                updatedCollection.getImagename(),
                 collectionUrl
         );
-        response.setCategoryName(collection.getCategory().getCategoryName());
+        response.setCategoryName(updatedCollection.getCategory().getCategoryName());
 
         return ApiResponse.success(response);
     }
 
     @Override
-    public String deleteCollection(Integer collectionId) throws IOException {
+    public String deleteCollection(Integer collectionId, Integer userId) throws IOException {
         //        check if collection object/record exists with given collectionId or not
         CollectionEntity existingCollection = collectionRepo.findById(collectionId)
                 .orElseThrow(() -> new CollectionNotFoundExpception("Collection not found with id = " + collectionId));
         String collectionName = existingCollection.getName();
-        int userId = existingCollection.getUserId().getUserId();
 
-//        only delete file/imagge in CollectionImages-backend-folder if in Db it has imageName stored(means user given img while creating this collection) or else imageName="" empty(means user did no give any img which does not need deleting anything)
-        if(!Objects.equals(existingCollection.getImagename(), "")){
-           //  Add userId to path - to store images separately per user then duplications or conflicts will not happen
-            String newPath = path + File.separator + userId; // userId-column is unique per users and does not have any special characters
-            //        delete the file/image associated with this object which will be deleted from table/db
-            Files.deleteIfExists(Paths.get(newPath + File.separator + existingCollection.getImagename())); // deletes empty folder or single file once
+        //        UserId Validation check- to see if same user is trying to delete his data or some one
+        if(Objects.equals(userId, existingCollection.getUserId().getUserId())) {
+            //        only delete file/imagge in CollectionImages-backend-folder if in Db it has imageName stored(means user given img while creating this collection) or else imageName="" empty(means user did no give any img which does not need deleting anything)
+            if(!Objects.equals(existingCollection.getImagename(), "")){
+                //  Add userId to path - to store images separately per user then duplications or conflicts will not happen
+                String newPath = path + File.separator + userId; // userId-column is unique per users and does not have any special characters
+                //        delete the file/image associated with this object which will be deleted from table/db
+                Files.deleteIfExists(Paths.get(newPath + File.separator + existingCollection.getImagename())); // deletes empty folder or single file once
+            }
+
+            //        delete the collection object from record/table
+            collectionRepo.delete(existingCollection);
+        } else {
+            throw new IllegalStateException("You userId: "+ userId +" are not authorized to delete other user's data!");
         }
-
-        //        delete the collection object from record/table
-        collectionRepo.delete(existingCollection);
 
         return "Collection deleted with name = " + collectionName;
     }
@@ -392,6 +399,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getName(),
                     collection.getCategory().getCategoryId(),
                     collection.getUserId().getUserId(),
+                    collection.getUserId().getUniqueUsername(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
@@ -445,6 +453,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getName(),
                     collection.getCategory().getCategoryId(),
                     collection.getUserId().getUserId(),
+                    collection.getUserId().getUniqueUsername(),
                     collection.getRating(),
                     collection.getReview(),
                     collection.getProgress(),
