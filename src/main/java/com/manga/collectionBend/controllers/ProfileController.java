@@ -68,6 +68,21 @@ public class ProfileController {
         }
     }
 
+//    Api to send OtherUser image/avatar to currentUser(who is visiting or search otherUser)
+    @GetMapping("/get-other-user-image/otheruser/{otherUserId}")
+    public ResponseEntity<byte[]> getImageByOtherUserId(@PathVariable Integer otherUserId){ // userId param value comes from parent/top RequestMapping({userId})
+        UserEntity user = userRepo.findById(otherUserId).orElse(null);
+
+        if(user != null){
+            byte[] imageFile = user.getImageData();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.valueOf(user.getImageType()))
+                    .body(imageFile);
+        }else{
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND) ;
+        }
+    }
+
 //    Change User Password Api
     @PutMapping("/change-password")
     public ResponseEntity<ApiResponse<String>> changePassword(@PathVariable Integer userId, @RequestBody ChangePwdRequest changePwdRequest){

@@ -47,6 +47,7 @@ public class UserEntity implements UserDetails {
     @Column(name = "username", unique = true)
 //    changing var-naming from username to uniqueUsername for sending uniqueUsername-field data to frontend properly
 //    without overlapping with email which is used for getUsername() method for UserDetails-SpringSecurity
+    @Size(min = 3, message = "The username must have at least 3 characters")
     private String uniqueUsername;
 
     @NotBlank(message = "The email field can't be blank")
