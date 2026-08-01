@@ -8,9 +8,9 @@ import com.manga.collectionBend.dto.CollectionPageResponse;
 import com.manga.collectionBend.entities.CategoryEntity;
 import com.manga.collectionBend.entities.CollectionEntity;
 import com.manga.collectionBend.exceptions.CollectionNotFoundExpception;
-import com.manga.collectionBend.exceptions.FileExistsException;
 import com.manga.collectionBend.repositories.CategoryRepo;
 import com.manga.collectionBend.repositories.CollectionRepo;
+import com.manga.collectionBend.utils.CollectionProgress;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -149,12 +149,17 @@ public class CollectionServiceImpl implements CollectionService{
         String collectionUrl = "";
         if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
             //        generate imageURL
-            collectionUrl = baseUrl + "/file/" + collection.getImagename() +"/userId/" + userId; // if imageName path exists in DB then create a Url path to send to Client
+//            here after /userId/ - we are not concatenating userId to the path at end, because frontend will add it and request this collection image separately depending on which user is view the page
+            collectionUrl = baseUrl + "/file/" + collection.getImagename() +"/userId/"; // if imageName path exists in DB then create a Url path to send to Client
         }
 
         CollectionDto response = new CollectionDto();
-        //        UserId Validation check- to see if same user is trying to access his data or some one
-        if(Objects.equals(userId, collection.getUserId().getUserId())) {
+        //        UserId Validation check is not needed for GET single Collection Api-
+        //        where otherUser can access/view current user's single collection page data from user-view page/api
+//        only Collections marked as Public or Friends - these are only viewed by otherUser- preventing Private marked collections from viewing
+//      if viewing user is this collection creator then we do not restrict him for viewing his own private collection data
+//        TODO- create a extra if() check to prevent otherUser to view this collection if they are not friends
+        if(Objects.equals(collection.getUserId().getUserId(), userId) || Objects.equals(collection.getPrivacy(), CollectionProgress.PUBLIC) || Objects.equals(collection.getPrivacy(), CollectionProgress.FRIENDS)) {
             //        map to collectionDto object and return it
             response = new CollectionDto(
                     collection.getCollectionId(),
@@ -172,7 +177,7 @@ public class CollectionServiceImpl implements CollectionService{
             );
             response.setCategoryName(collection.getCategory().getCategoryName());
         } else {
-            throw new IllegalStateException("You userId: "+ userId +" are not authorized to access other user's data!");
+            throw new IllegalStateException("You userId: "+ userId +" are not authorized to access other user's private data!");
         }
 
         return response;
