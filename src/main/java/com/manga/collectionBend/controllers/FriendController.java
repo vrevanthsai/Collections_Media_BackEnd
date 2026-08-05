@@ -2,6 +2,7 @@ package com.manga.collectionBend.controllers;
 
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.dto.ApiResponse;
+import com.manga.collectionBend.dto.FriendConnectionDto;
 import com.manga.collectionBend.dto.FriendDto;
 import com.manga.collectionBend.service.FriendService;
 import com.manga.collectionBend.utils.FriendStatus;
@@ -69,5 +70,11 @@ public class FriendController {
 //    this api sends list of blocked users list done by a User(currentUser)
     public ApiResponse<List<FriendDto>> getBlocked(@AuthenticationPrincipal UserEntity currentUser) {
         return ApiResponse.success(friendService.getBlockedUsers(currentUser.getUserId()));
+    }
+
+//    Get Friend Connection data/status between 2 users
+    @GetMapping("/check-friend-connection-status/{otherUserId}")
+    public ApiResponse<FriendConnectionDto> checkFriendConnection(@PathVariable Integer userId, @PathVariable Integer otherUserId) {
+        return ApiResponse.success(friendService.checkFriendConnection(userId, otherUserId));
     }
 }

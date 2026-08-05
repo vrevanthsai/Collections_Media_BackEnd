@@ -2,6 +2,7 @@ package com.manga.collectionBend.service;
 
 import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.dto.ApiResponse;
+import com.manga.collectionBend.dto.FriendConnectionDto;
 import com.manga.collectionBend.dto.FriendDto;
 import com.manga.collectionBend.entities.FriendConnection;
 import com.manga.collectionBend.repositories.FriendConnectionRepo;
@@ -152,5 +153,22 @@ public class FriendService {
         return friendConnectionRepo.findBlockedByUser(blockerId).stream()
                 .map(c -> FriendDto.fromEntity(c.getReceiver())) // receiver = the one who got blocked
                 .toList();
+    }
+
+    public FriendConnectionDto checkFriendConnection(Integer userId, Integer otherUserId) {
+//        if connection is there between 2 users then we send Entity class data as Json to frontend or else send empty object
+        FriendConnection connection = friendConnectionRepo.findBetween(userId, otherUserId).orElse(new FriendConnection());
+
+//        send Friend Connection Dto for response - Java object will get automatically converted to Json by SpringBoot
+        if(connection.getId() != null){
+            return new FriendConnectionDto(
+                    connection.getId(),
+                    connection.getRequester().getUserId(),
+                    connection.getReceiver().getUserId(),
+                    connection.getStatus()
+            );
+        } else {
+            return new FriendConnectionDto();
+        }
     }
 }
