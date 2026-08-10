@@ -1,6 +1,7 @@
 package com.manga.collectionBend.entities;
 
 import com.manga.collectionBend.auth.entities.UserEntity;
+import com.manga.collectionBend.utils.CollectionProgress;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
@@ -11,7 +12,7 @@ import jakarta.validation.constraints.*;
 @Table(name = "collection")
 public class CollectionEntity {
 
-    public CollectionEntity(Integer collectionId, String name, CategoryEntity category, UserEntity userId, Integer rating, String review, String progress, String privacy, String addedDate, String imagename) {
+    public CollectionEntity(Integer collectionId, String name, CategoryEntity category, UserEntity userId, Integer rating, String review, String progress, CollectionProgress privacy, String addedDate, String imagename) {
         this.collectionId = collectionId;
         this.name = name;
         this.category = category;
@@ -60,8 +61,8 @@ public class CollectionEntity {
     private String progress;
 
     @Column(nullable = false)
-    @NotBlank(message = "Please provide collection's privacy")
-    private String privacy;
+    @Enumerated(EnumType.STRING)
+    private CollectionProgress privacy; // PUBLIC, PRIVATE, FRIENDS
 
     @Column(nullable = false)
     @NotBlank(message = "Please provide collection's created Date")
@@ -128,11 +129,11 @@ public class CollectionEntity {
         this.progress = progress;
     }
 
-    public String getPrivacy() {
+    public CollectionProgress getPrivacy() {
         return privacy;
     }
 
-    public void setPrivacy(String privacy) {
+    public void setPrivacy(CollectionProgress privacy) {
         this.privacy = privacy;
     }
 

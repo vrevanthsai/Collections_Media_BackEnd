@@ -1,7 +1,8 @@
 package com.manga.collectionBend.dto;
 
-import com.manga.collectionBend.auth.entities.UserEntity;
-import com.manga.collectionBend.entities.CategoryEntity;
+import com.manga.collectionBend.utils.CollectionProgress;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -10,11 +11,12 @@ import lombok.Data;
 //@AllArgsConstructor
 public class CollectionDto {
 
-    public CollectionDto(Integer collectionId, String name, Integer category, Integer userId, Integer rating, String review, String progress, String privacy, String addedDate, String imagename, String imageUrl) {
+    public CollectionDto(Integer collectionId, String name, Integer category, Integer userId, String username, Integer rating, String review, String progress, CollectionProgress privacy, String addedDate, String imagename, String imageUrl) {
         this.collectionId = collectionId;
         this.name = name;
         this.category = category;
         this.userId = userId;
+        this.username = username;
         this.rating = rating;
         this.review = review;
         this.progress = progress;
@@ -41,6 +43,8 @@ public class CollectionDto {
     @NotBlank(message = "Please provide userId")
     private Integer userId;
 
+    private String username;
+
     @NotBlank(message = "Please provide collection's rating")
     private Integer rating;
 
@@ -50,8 +54,8 @@ public class CollectionDto {
     @NotBlank(message = "Please provide collection's progress")
     private String progress;
 
-    @NotBlank(message = "Please provide collection's privacy")
-    private String privacy;
+    @Enumerated(EnumType.STRING)
+    private CollectionProgress privacy; // PUBLIC, PRIVATE, FRIENDS
 
     @NotBlank(message = "Please provide collection's created Date")
 //    private Date addedDate;
@@ -95,6 +99,14 @@ public class CollectionDto {
         this.userId = userId;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public String getCategoryName() {
         return categoryName;
     }
@@ -127,11 +139,11 @@ public class CollectionDto {
         this.progress = progress;
     }
 
-    public String getPrivacy() {
+    public CollectionProgress getPrivacy() {
         return privacy;
     }
 
-    public void setPrivacy(String privacy) {
+    public void setPrivacy(CollectionProgress privacy) {
         this.privacy = privacy;
     }
 

@@ -32,8 +32,8 @@ public class CategoryController {
 //    POST-Api - Add category
     @PostMapping("/add-category")
 //    if only Json/one part is being sent from frontend then we can use @RequestBody and if we have more then 2 parts - we use @RequestPart for receiving data from frontend Api call
-    public ResponseEntity<ApiResponse<CategoryResponse>> addCategoryHandler(@RequestBody CategoryRequest categoryRequest) {
-        ApiResponse<CategoryResponse> response = categoryService.addCategoryHandler(categoryRequest);
+    public ResponseEntity<ApiResponse<CategoryResponse>> addCategoryHandler(@RequestBody CategoryRequest categoryRequest, @PathVariable Integer userId) { // userId from parent-Mapping path- to prevent users to access data of other user
+        ApiResponse<CategoryResponse> response = categoryService.addCategoryHandler(categoryRequest, userId);
 //        send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
         if (!response.isSuccess()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
@@ -44,17 +44,17 @@ public class CategoryController {
 
 //    Update-Api category
     @PutMapping("/update-category/{categoryId}")
-    public ResponseEntity<CategoryResponse> updateCategoryHandler(@PathVariable Integer categoryId, @RequestBody CategoryRequest categoryRequest) {
+    public ResponseEntity<CategoryResponse> updateCategoryHandler(@PathVariable Integer categoryId, @RequestBody CategoryRequest categoryRequest, @PathVariable Integer userId) {
         return ResponseEntity.ok(
-                categoryService.updateCategoryHandler(categoryId, categoryRequest)
+                categoryService.updateCategoryHandler(categoryId, categoryRequest, userId)
         );
     }
 
 //    Delete-Api category
     @DeleteMapping("/delete-category/{categoryId}")
-    public ResponseEntity<CategoryDeleteResponse> deleteCategoryHandler(@PathVariable Integer categoryId) {
+    public ResponseEntity<CategoryDeleteResponse> deleteCategoryHandler(@PathVariable Integer categoryId, @PathVariable Integer userId) {
         return ResponseEntity.ok(
-                categoryService.deleteCategoryHandler(categoryId)
+                categoryService.deleteCategoryHandler(categoryId, userId)
         );
     }
 }

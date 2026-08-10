@@ -9,15 +9,15 @@ import java.io.IOException;
 import java.util.List;
 
 public interface CollectionService {
-    ApiResponse<CollectionDto> addCollection(CollectionDto collectionDto, MultipartFile file) throws IOException;
+    ApiResponse<CollectionDto> addCollection(CollectionDto collectionDto, MultipartFile file, Integer userId) throws IOException;
 
-    CollectionDto getCollection(Integer collectionId);
+    CollectionDto getCollection(Integer collectionId, Integer userId);
 
     List<CollectionDto> getAllCollections();
 
-    ApiResponse<CollectionDto> updateCollection(Integer collectionId, CollectionDto collectionDto, MultipartFile file) throws IOException;
+    ApiResponse<CollectionDto> updateCollection(Integer collectionId, CollectionDto collectionDto, MultipartFile file, Integer userId) throws IOException;
 
-    String deleteCollection(Integer collectionId) throws IOException;
+    String deleteCollection(Integer collectionId, Integer userId) throws IOException;
 
     CollectionPageResponse getAllCollectionsWithPagination(Integer pageNumber, Integer pageSize);
 

@@ -5,13 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.auth.utils.AuthResponse;
-import com.manga.collectionBend.dto.ApiResponse;
-import com.manga.collectionBend.dto.ChangePwdRequest;
-import com.manga.collectionBend.dto.ProfileRequest;
+import com.manga.collectionBend.dto.*;
 import com.manga.collectionBend.service.ProfileService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -69,6 +68,21 @@ public class ProfileController {
         }
     }
 
+//    Api to send OtherUser image/avatar to currentUser(who is visiting or search otherUser)
+    @GetMapping("/get-other-user-image/otheruser/{otherUserId}")
+    public ResponseEntity<byte[]> getImageByOtherUserId(@PathVariable Integer otherUserId){ // userId param value comes from parent/top RequestMapping({userId})
+        UserEntity user = userRepo.findById(otherUserId).orElse(null);
+
+        if(user != null){
+            byte[] imageFile = user.getImageData();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.valueOf(user.getImageType()))
+                    .body(imageFile);
+        }else{
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND) ;
+        }
+    }
+
 //    Change User Password Api
     @PutMapping("/change-password")
     public ResponseEntity<ApiResponse<String>> changePassword(@PathVariable Integer userId, @RequestBody ChangePwdRequest changePwdRequest){
@@ -85,5 +99,21 @@ public class ProfileController {
     @DeleteMapping("/delete-my-account")
     public ResponseEntity<String> deleteMyAccount(@PathVariable Integer userId) throws IOException { // userId from parent Mapping path
         return ResponseEntity.ok(profileService.deleteMyAccountHandler(userId));
+    }
+
+//  search user(username) + collection(name) api
+//    In frontend or postman - PathVariable- we give /search/rinku (/search/{query} - {query} name must be same as below method parameter var name which uses PathVariable)
+//    RequestParam- using path- /search?query=${rinku} (?key=value format) and ?query name must be same as below method parameter var name which users RequestParam
+    @GetMapping("/search-user-or-collection") // here searchValue- can be user's username or collection's name
+    public ApiResponse<SearchResultDto> searchUserOrCollection(@RequestParam String query, @AuthenticationPrincipal UserEntity currentUser) {
+        return ApiResponse.success(profileService.searchUserOrCollectionHandler(query, currentUser));
+    }
+
+//    create user-view api which sends basic user details for top section of User-View page
+//    and sends Collections data/list of provided userId(user) which are marked as Public for bottom section of User-View page
+//    and if that user(B) is friend of requested user(A) request to view B profile/User-View page then send Collection data which has both marked as Public and Friends
+    @GetMapping("/user-view-page/{otherUserId}")
+    public ApiResponse<UserViewDto> userViewPage(@PathVariable Integer userId, @PathVariable Integer otherUserId){ // userId is the currentUser requesting ID
+        return ApiResponse.success(profileService.userViewPageHandler(userId, otherUserId));
     }
 }
