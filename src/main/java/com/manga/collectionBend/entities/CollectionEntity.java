@@ -5,6 +5,9 @@ import com.manga.collectionBend.utils.CollectionProgress;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 //@NoArgsConstructor
 //@AllArgsConstructor
@@ -72,6 +75,11 @@ public class CollectionEntity {
     @Column(nullable = true, length = 300)
 //    @NotBlank(message = "Please provide collection's imagename")
     private String imagename;
+
+//    this var used for auto-deleting linked child records in SharedCollection table when its linked parent collection record is deleted in this Collections table
+    // when this collection is deleted, all shares referencing it are cleaned up too
+    @OneToMany(mappedBy = "collection", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SharedCollection> shares = new ArrayList<>();
 
     public Integer getCollectionId() {
         return collectionId;

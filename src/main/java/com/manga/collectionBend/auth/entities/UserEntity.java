@@ -1,9 +1,6 @@
 package com.manga.collectionBend.auth.entities;
 
-import com.manga.collectionBend.entities.CategoryEntity;
-import com.manga.collectionBend.entities.CollectionEntity;
-import com.manga.collectionBend.entities.FriendConnection;
-import com.manga.collectionBend.entities.NotificationEntity;
+import com.manga.collectionBend.entities.*;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -117,6 +114,13 @@ public class UserEntity implements UserDetails {
 
     @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<NotificationEntity> triggeredNotifications = new ArrayList<>();
+
+    // --- Shared collections: user can be EITHER side ---
+    @OneToMany(mappedBy = "sharedBy", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SharedCollection> collectionsSharedByMe = new ArrayList<>();
+
+    @OneToMany(mappedBy = "sharedWith", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SharedCollection> collectionsSharedWithMe = new ArrayList<>();
 
     public Integer getUserId() {
         return userId;
