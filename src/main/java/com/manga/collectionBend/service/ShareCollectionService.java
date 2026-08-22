@@ -49,12 +49,20 @@ public class ShareCollectionService {
         // fetch all requested collections in one query
         List<CollectionEntity> collections = collectionRepo.findAllById(collectionIds);
 
-        // ownership check — sharer must own every collection they're trying to share
-        for (CollectionEntity collection : collections) {
-            UserEntity owner = collection.getCategory().getUser();
-            if (!owner.getUserId().equals(sharerId)) {
-                throw new IllegalStateException("You can only share your own collections");
+        if(!collections.isEmpty()) {
+            // ownership check — sharer must own every collection they're trying to share
+            for (CollectionEntity collection : collections) {
+                UserEntity owner = collection.getCategory().getUser();
+                if (!owner.getUserId().equals(sharerId)) {
+                    throw new IllegalStateException("You can only share your own collections");
+                }
             }
+        } else {
+            throw new IllegalStateException("Empty collections list can not be shared");
+        }
+
+        if(friendUserIds.isEmpty()) {
+            throw new IllegalStateException("friend userIds list can not be empty to share collections");
         }
 
         // lightweight reference (no extra SELECT) — used as the FK owner on each SharedCollection row
@@ -67,7 +75,8 @@ public class ShareCollectionService {
             // only share with users who are actually accepted friends
             boolean areFriends = friendConnectionRepo.findAcceptedBetween(sharerId, friendId).isPresent();
             if (!areFriends) {
-                continue; // not a friend — skip silently or TODO- THROW error or send error msg to frontend that this user is not friend
+                throw new IllegalStateException("You can not share collections to Users - who are not your friends!!");
+//                continue; // not a friend — skip silently or TODO- THROW error or send error msg to frontend that this user is not friend
             }
 
             // count how many collections were already shared to THIS friend within the rate-limit window
@@ -134,29 +143,40 @@ public class ShareCollectionService {
                 .build();
     }
 
-//    returns list of share collections done from friends(multiple) to one user
-    public List<SharedCollectionDto> getSharedWithMe(Integer userId) {
-        return sharedCollectionRepo.findBySharedWith_UserIdOrderBySharedAtDesc(userId).stream()
+//    returns list of share collections done by one user to his friends(multiple)
+    public List<SharedCollectionDto> getSharedByMe(Integer userId) {
+        return sharedCollectionRepo.findBySharedBy_UserIdOrderBySharedAtDesc(userId).stream()
                 .map(SharedCollectionDto::fromEntity)
                 .toList();
     }
 
-    public void markAsViewed(Integer shareId) {
+    public void markAsViewed(Integer shareId, Integer userId) {
         var share = sharedCollectionRepo.findById(shareId)
                 .orElseThrow(() -> new RuntimeException("Share not found"));
-        share.setViewed(true);
-        sharedCollectionRepo.save(share);
+        if(share.getSharedWith().getUserId().equals(userId)) {
+            share.setViewed(true);
+            sharedCollectionRepo.save(share);
+        } else {
+            throw new IllegalStateException("You can not mark this shared collection as viewed- only Receiver user must mark as viewed!");
+        }
     }
 
-// TODO-  update this method logic - either to record how other user is adding the shared collection of A user into their collections data/list/account(ex- check both user's collection names)
-//    - or remove this actionStatus logic and add logic to record/store Liked feature same like sharing posts and getting likes or reactions in Instagram
-    public void updateActionStatus(Integer shareId, ShareActionStatus status) {
+//  This method changes the actionStatus of shared collection only done by receiver user(sharedWith)
+    public void updateActionStatus(Integer shareId, ShareActionStatus status, Integer userId) {
+        if(status == null){
+            throw new IllegalStateException("status can not be null");
+        }
         var share = sharedCollectionRepo.findById(shareId)
                 .orElseThrow(() -> new RuntimeException("Share not found"));
-        share.setActionStatus(status);
-        sharedCollectionRepo.save(share);
+        if(share.getSharedWith().getUserId().equals(userId)) {
+            share.setActionStatus(status);
+            sharedCollectionRepo.save(share);
+        } else {
+            throw new IllegalStateException("You can not change actionStatus for this shared collection- only Receiver user can change action status!");
+        }
     }
 
+    //    returns list of share collections done from friends(multiple) to one user
 //    this method sends organized shared collections list with their friends details who shared them
 //    this is used for Shared Collections page in frontend - where each row is about friend user details at top and below contains cards of shared collections data and in sequence all rows are displayed here in this page
     public List<GroupedShareDto> getGroupedSharesFromFriends(Integer userId) {

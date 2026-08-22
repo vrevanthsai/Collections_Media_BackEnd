@@ -16,6 +16,8 @@ public interface SharedCollectionRepo extends JpaRepository<SharedCollection, In
 //    OrderBySharedAtDesc- sorts the obtained list in Descending order based on SharedAt field(date/time) stored for each ShareCollection item of list
     List<SharedCollection> findBySharedWith_UserIdOrderBySharedAtDesc(Integer userId);
 
+    List<SharedCollection> findBySharedBy_UserIdOrderBySharedAtDesc(Integer userId);
+
     List<SharedCollection> findBySharedWith_UserIdAndIsViewedFalse(Integer userId);
 
     long countBySharedWith_UserIdAndIsViewedFalse(Integer userId);

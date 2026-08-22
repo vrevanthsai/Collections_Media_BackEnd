@@ -41,7 +41,7 @@ public class SharedCollection {
     @Column(nullable = false)
     private boolean isViewed = false; // did the recipient open/see this share yet
 
-    // did the recipient act on it — e.g. "start their own collection from this"
+    // did the recipient act on it — e.g. "whether he liked it or added to his watch list or dismissed"
     @Enumerated(EnumType.STRING)
-    private ShareActionStatus actionStatus; // PENDING, ADDED_TO_MY_COLLECTION, DISMISSED
+    private ShareActionStatus actionStatus; // PENDING, ADD_TO_WATCH_LIST, LIKED, DISMISSED
 }
