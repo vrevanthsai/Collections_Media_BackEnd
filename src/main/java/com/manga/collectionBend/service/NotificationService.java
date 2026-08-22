@@ -21,12 +21,28 @@ public class NotificationService {
         this.notificationRepo = notificationRepo;
     }
 
+//    This method(4 params) used for Friend Connection Types(friend_request, friend-accepted , etc)
     public void createNotification(UserEntity recipient, UserEntity actor, NotificationType type, Integer referenceId) {
         NotificationEntity notification = NotificationEntity.builder()
                 .recipient(recipient)
                 .actor(actor)
                 .type(type)
                 .referenceId(referenceId)
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+        notificationRepo.save(notification);
+    }
+
+//    This method(5 params) used for Collection Shared type
+    public void createNotification(UserEntity recipient, UserEntity actor, NotificationType type,
+                                   Integer referenceId, Integer count) {
+        NotificationEntity notification = NotificationEntity.builder()
+                .recipient(recipient)
+                .actor(actor)
+                .type(type)
+                .referenceId(referenceId)
+                .sharesCount(count)
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();

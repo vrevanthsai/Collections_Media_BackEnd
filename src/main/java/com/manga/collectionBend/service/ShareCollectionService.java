@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ShareCollectionService {
-    private static final int MAX_SHARES_PER_WINDOW = 5;         // max collections one friend can receive per window
+    private static final int MAX_SHARES_PER_WINDOW = 2;         // max collections one friend can receive per window
     private static final Duration RATE_LIMIT_WINDOW = Duration.ofHours(2); // rolling time window for the limit
 
     private final SharedCollectionRepo sharedCollectionRepo;
@@ -124,8 +124,9 @@ public class ShareCollectionService {
             // one grouped notification per friend (not per collection) to avoid notification spam
 //            instead of showing each notification per share collection item among total shares(5)
 //            - we only send last share collection id to frontend in single notification for receiver friends account - which avoids spam
+//            also stores total shares count done by A user to B friend user in notification row table
             notificationService.createNotification(
-                    friendRef, sharerRef, NotificationType.COLLECTION_SHARED, lastShareId);
+                    friendRef, sharerRef, NotificationType.COLLECTION_SHARED, lastShareId, collectionsToShare.size());
 
             // flag if this friend only received a subset due to hitting their quota mid-way
 //            this skippedRecipients- are friends of A user where their total share collections list is trimmed/subset and send from A to these friends
@@ -171,6 +172,11 @@ public class ShareCollectionService {
         if(share.getSharedWith().getUserId().equals(userId)) {
             share.setActionStatus(status);
             sharedCollectionRepo.save(share);
+            if(status == ShareActionStatus.LIKED) {
+//                here after shareWith/receiver acts or changes actionStatus to LIKED then we send notification to shareBy/sender friend-user to let him know that his suggested/shared collection was liked by his friend
+                notificationService.createNotification(
+                        share.getSharedBy(), share.getSharedWith(), NotificationType.COLLECTION_LIKED, shareId);
+            }
         } else {
             throw new IllegalStateException("You can not change actionStatus for this shared collection- only Receiver user can change action status!");
         }

@@ -36,6 +36,9 @@ public class NotificationEntity {
     // points to the relevant entity (FriendConnection id, Collection id, etc.) depending on `type`
     private Integer referenceId;
 
+    // shared collection count, meaningful only for certain types (e.g. COLLECTION_SHARED)
+    private Integer sharesCount;
+
     @Column(nullable = false)
     private boolean isRead = false;
 
