@@ -15,7 +15,8 @@ public class SharedCollectionDto {
     private Integer shareId;
     private Integer collectionId;
     private String collectionName;
-    private String imageName;
+//    private String imageName;
+    private String categoryName;
     private String sharedByUsername;
     private LocalDateTime sharedAt;
     private boolean isViewed;
@@ -26,7 +27,8 @@ public class SharedCollectionDto {
                 .shareId(share.getId())
                 .collectionId(share.getCollection().getCollectionId())
                 .collectionName(share.getCollection().getName())
-                .imageName(share.getCollection().getImagename())
+//                .imageName(share.getCollection().getImagename())
+                .categoryName(share.getCollection().getCategory().getCategoryName())
                 .sharedByUsername(share.getSharedBy().getUniqueUsername())
                 .sharedAt(share.getSharedAt())
                 .isViewed(share.isViewed())

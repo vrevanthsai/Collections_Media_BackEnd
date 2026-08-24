@@ -11,6 +11,7 @@ import com.manga.collectionBend.repositories.CollectionRepo;
 import com.manga.collectionBend.repositories.FriendConnectionRepo;
 import com.manga.collectionBend.repositories.SharedCollectionRepo;
 import com.manga.collectionBend.utils.NotificationType;
+import com.manga.collectionBend.utils.RecommendationsTabType;
 import com.manga.collectionBend.utils.ShareActionStatus;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -185,9 +186,16 @@ public class ShareCollectionService {
     //    returns list of share collections done from friends(multiple) to one user
 //    this method sends organized shared collections list with their friends details who shared them
 //    this is used for Shared Collections page in frontend - where each row is about friend user details at top and below contains cards of shared collections data and in sequence all rows are displayed here in this page
-    public List<GroupedShareDto> getGroupedSharesFromFriends(Integer userId) {
-        // fetch all shares received by this user, most recent first
-        List<SharedCollection> shares = sharedCollectionRepo.findBySharedWith_UserIdOrderBySharedAtDesc(userId);
+//    this method sends groupedSharedCollections data along with it User details for Both cases/tabs like 1) Share with Me and 2)Share by Me
+    public List<GroupedShareDto> getGroupedSharesFromFriends(Integer userId, RecommendationsTabType tabType) {
+        List<SharedCollection> shares;
+        if(tabType == RecommendationsTabType.SHARE_WITH_ME){
+            // fetch all shares received by this user, most recent first
+            shares = sharedCollectionRepo.findBySharedWith_UserIdOrderBySharedAtDesc(userId);
+        } else {
+//            fetch all shares sent by this user to his friends
+            shares = sharedCollectionRepo.findBySharedBy_UserIdOrderBySharedAtDesc(userId);
+        }
 
         // group shares by who sent them, preserving insertion order (most recent sharer group first)
 //        data is a Map(key/value pair) - of kay = userId(of one friend) and value = shared collections list by that user(upto 5 max per 2 hrs)
@@ -200,7 +208,14 @@ public class ShareCollectionService {
 
         return grouped.values().stream()
                 .map(group -> {
-                    UserEntity sharer = group.get(0).getSharedBy(); // same sharer across the whole group
+                    UserEntity sharer;
+                    if(tabType == RecommendationsTabType.SHARE_WITH_ME){
+//                        sharer = who shared/recommended collections with/to me
+                        sharer = group.get(0).getSharedBy(); // same sharer across the whole group
+                    } else {
+//                        sharer = whom i shared/recommended collection to
+                        sharer = group.get(0).getSharedWith();
+                    }
 
                     return GroupedShareDto.builder()
                             .sharedByUserId(sharer.getUserId())

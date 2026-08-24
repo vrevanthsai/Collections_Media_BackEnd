@@ -3,6 +3,7 @@ package com.manga.collectionBend.controllers;
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.dto.*;
 import com.manga.collectionBend.service.ShareCollectionService;
+import com.manga.collectionBend.utils.RecommendationsTabType;
 import com.manga.collectionBend.utils.ShareActionStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,6 +27,7 @@ public class ShareCollectionController {
         return ApiResponse.success(result);
     }
 
+//    Not using this Api anymore - it's linked in /get-recommendations api below
 //    Api which sends list/data about total shared Collections list done by A user to their friends till now
     @GetMapping("/shareby-me")
     public ApiResponse<List<SharedCollectionDto>> getSharedWithMe(@AuthenticationPrincipal UserEntity currentUser) {
@@ -44,9 +46,9 @@ public class ShareCollectionController {
         return ApiResponse.success("Status updated");
     }
 
-//    this api used for Shared Collections page to get total shared collections by multiple friend users
-    @GetMapping("/received/grouped")
-    public ApiResponse<List<GroupedShareDto>> getGroupedShares(@AuthenticationPrincipal UserEntity currentUser) {
-        return ApiResponse.success(shareService.getGroupedSharesFromFriends(currentUser.getUserId()));
+//    this api used for Shared Collections or Recommendations page to get total shared/recommended collections by multiple friend users or user recommended to his friends
+    @GetMapping("/get-recommendations")
+    public ApiResponse<List<GroupedShareDto>> getGroupedShares(@AuthenticationPrincipal UserEntity currentUser, @RequestParam RecommendationsTabType tabType) {
+        return ApiResponse.success(shareService.getGroupedSharesFromFriends(currentUser.getUserId(), tabType));
     }
 }
