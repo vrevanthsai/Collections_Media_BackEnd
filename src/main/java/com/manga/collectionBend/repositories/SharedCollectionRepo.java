@@ -33,4 +33,12 @@ public interface SharedCollectionRepo extends JpaRepository<SharedCollection, In
             @Param("recipientId") Integer recipientId,
             @Param("windowStart") LocalDateTime windowStart
     );
+
+//    Check if there is a shared-collection record from one user(shareBY) to another user(shareWith)
+    @Query("""
+        SELECT CASE WHEN COUNT(sc) > 0 THEN true ELSE false END
+        FROM SharedCollection sc
+        WHERE (sc.sharedBy.userId = :userA AND sc.sharedWith.userId = :userB)
+        """)
+    boolean existsBetween(@Param("userA") Integer userA, @Param("userB") Integer userB);
 }

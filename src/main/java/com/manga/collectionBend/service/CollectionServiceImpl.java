@@ -7,10 +7,14 @@ import com.manga.collectionBend.dto.CollectionDto;
 import com.manga.collectionBend.dto.CollectionPageResponse;
 import com.manga.collectionBend.entities.CategoryEntity;
 import com.manga.collectionBend.entities.CollectionEntity;
+import com.manga.collectionBend.entities.FriendConnection;
 import com.manga.collectionBend.exceptions.CollectionNotFoundExpception;
 import com.manga.collectionBend.repositories.CategoryRepo;
 import com.manga.collectionBend.repositories.CollectionRepo;
-import com.manga.collectionBend.utils.CollectionProgress;
+import com.manga.collectionBend.repositories.FriendConnectionRepo;
+import com.manga.collectionBend.repositories.SharedCollectionRepo;
+import com.manga.collectionBend.utils.CollectionPrivacy;
+import com.manga.collectionBend.utils.FriendStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +30,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class CollectionServiceImpl implements CollectionService{
@@ -34,6 +39,8 @@ public class CollectionServiceImpl implements CollectionService{
     private final CollectionRepo collectionRepo;
     private final FileService fileService;
     private final CategoryRepo categoryRepo;
+    private final FriendConnectionRepo friendConnectionRepo;
+    private final SharedCollectionRepo sharedCollectionRepo;
 
     @Value("${project.collectionImage}")
     private String path;
@@ -41,11 +48,13 @@ public class CollectionServiceImpl implements CollectionService{
     @Value("${base.url}")
     private String baseUrl;
 
-    public CollectionServiceImpl(UserRepo userRepo, CollectionRepo collectionRepo, FileService fileService, CategoryRepo categoryRepo) {
+    public CollectionServiceImpl(UserRepo userRepo, CollectionRepo collectionRepo, FileService fileService, CategoryRepo categoryRepo, FriendConnectionRepo friendConnectionRepo, SharedCollectionRepo sharedCollectionRepo) {
         this.userRepo = userRepo;
         this.collectionRepo = collectionRepo;
         this.fileService = fileService;
         this.categoryRepo = categoryRepo;
+        this.friendConnectionRepo = friendConnectionRepo;
+        this.sharedCollectionRepo = sharedCollectionRepo;
     }
 
     @Override
@@ -146,6 +155,12 @@ public class CollectionServiceImpl implements CollectionService{
         CollectionEntity collection = collectionRepo.findById(collectionId)
                 .orElseThrow(() -> new CollectionNotFoundExpception("Collection not found with id = " + collectionId));
 
+//        used for finding whether 2 users are friends or not
+        Optional<FriendConnection> friendConnection = friendConnectionRepo.findAcceptedBetween(collection.getUserId().getUserId(), userId);
+
+//        used for checking whether a shared-collection record exist or not from collection-creator(userA) to viewingUser(userId)- not vise versa(not both sides)
+        boolean sharedCollectionExist = sharedCollectionRepo.existsBetween(collection.getUserId().getUserId(), userId);
+
         String collectionUrl = "";
         if(!Objects.equals(collection.getImagename(), "")){ // not equal to null
             //        generate imageURL
@@ -159,7 +174,11 @@ public class CollectionServiceImpl implements CollectionService{
 //        only Collections marked as Public or Friends - these are only viewed by otherUser- preventing Private marked collections from viewing
 //      if viewing user is this collection creator then we do not restrict him for viewing his own private collection data
 //        TODO- create a extra if() check to prevent otherUser to view this collection if they are not friends
-        if(Objects.equals(collection.getUserId().getUserId(), userId) || Objects.equals(collection.getPrivacy(), CollectionProgress.PUBLIC) || Objects.equals(collection.getPrivacy(), CollectionProgress.FRIENDS)) {
+        //        we also allow otherUser/viewingUser to view this single collection data- when collection is marked as private but 2 users(both collection-creator and viewingUser) must be friends and share-collection record must exist between them
+        boolean privateViewingCondition = false;
+        privateViewingCondition = Objects.equals(collection.getPrivacy(), CollectionPrivacy.PRIVATE) && (friendConnection.get().getStatus() == FriendStatus.ACCEPTED) && sharedCollectionExist;
+
+        if(Objects.equals(collection.getUserId().getUserId(), userId) || Objects.equals(collection.getPrivacy(), CollectionPrivacy.PUBLIC) || Objects.equals(collection.getPrivacy(), CollectionPrivacy.FRIENDS) || privateViewingCondition) {
             //        map to collectionDto object and return it
             response = new CollectionDto(
                     collection.getCollectionId(),
@@ -177,6 +196,7 @@ public class CollectionServiceImpl implements CollectionService{
             );
             response.setCategoryName(collection.getCategory().getCategoryName());
         } else {
+//            TODO- send error msg to Frontend using ApiResponse class instead of throwing error
             throw new IllegalStateException("You userId: "+ userId +" are not authorized to access other user's private data!");
         }
 
