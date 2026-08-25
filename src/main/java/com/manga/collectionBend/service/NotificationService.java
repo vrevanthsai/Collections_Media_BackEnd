@@ -49,6 +49,22 @@ public class NotificationService {
         notificationRepo.save(notification);
     }
 
+    //    This method(6 params) used for Collection Liked type
+    public void createNotification(UserEntity recipient, UserEntity actor, NotificationType type,
+                                   Integer referenceId, Integer collectionId, String collectionName) {
+        NotificationEntity notification = NotificationEntity.builder()
+                .recipient(recipient)
+                .actor(actor)
+                .type(type)
+                .referenceId(referenceId)
+                .collectionId(collectionId)
+                .collectionName(collectionName)
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+        notificationRepo.save(notification);
+    }
+
     public List<NotificationDto> getAllNotifications(Integer userId) {
         return notificationRepo.findByRecipient_UserIdOrderByCreatedAtDesc(userId).stream()
                 .map(NotificationDto::fromEntity)
@@ -89,6 +105,12 @@ public class NotificationService {
     @Transactional
     public void removeAllNotificationsByReference(Integer referenceId) {
         notificationRepo.deleteAllByReferenceIdForFriendTypes(referenceId);
+    }
+
+//    Removes a single row liked to Collection_liked type
+    @Transactional
+    public void removeNotificationByReferenceIdForCollectionLikedType(Integer referenceId) {
+        notificationRepo.deleteByReferenceIdForCollectionLikedType(referenceId); // here referenceId = sharedId which has LIKED status
     }
 
     public void deleteNotificationHandler(Integer notificationId, Integer userId) {

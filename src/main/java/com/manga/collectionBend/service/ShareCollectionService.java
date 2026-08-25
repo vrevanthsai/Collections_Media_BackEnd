@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ShareCollectionService {
     private static final int MAX_SHARES_PER_WINDOW = 2;         // max collections one friend can receive per window
-    private static final Duration RATE_LIMIT_WINDOW = Duration.ofHours(2); // rolling time window for the limit
+    private static final Duration RATE_LIMIT_WINDOW = Duration.ofHours(1); // rolling time window for the limit
 
     private final SharedCollectionRepo sharedCollectionRepo;
     private final CollectionRepo collectionRepo;
@@ -175,8 +175,13 @@ public class ShareCollectionService {
             sharedCollectionRepo.save(share);
             if(status == ShareActionStatus.LIKED) {
 //                here after shareWith/receiver acts or changes actionStatus to LIKED then we send notification to shareBy/sender friend-user to let him know that his suggested/shared collection was liked by his friend
+//                one shareId record = one collectionId record - so we can call first shareId - next inside its stored collectionId
                 notificationService.createNotification(
-                        share.getSharedBy(), share.getSharedWith(), NotificationType.COLLECTION_LIKED, shareId);
+                        share.getSharedBy(), share.getSharedWith(), NotificationType.COLLECTION_LIKED, shareId, share.getCollection().getCollectionId(), share.getCollection().getName());
+            }
+            else if(status == ShareActionStatus.PENDING){
+//                delete any notification records when Status is PENDING(either initial value or unliking toggle value) which may be created for this ShareId- when its status was LIKED previously
+                notificationService.removeNotificationByReferenceIdForCollectionLikedType(shareId);
             }
         } else {
             throw new IllegalStateException("You can not change actionStatus for this shared collection- only Receiver user can change action status!");
@@ -199,11 +204,14 @@ public class ShareCollectionService {
 
         // group shares by who sent them, preserving insertion order (most recent sharer group first)
 //        data is a Map(key/value pair) - of kay = userId(of one friend) and value = shared collections list by that user(upto 5 max per 2 hrs)
+//        Collectors.toList() - This is the downstream collector — it tells groupingBy how to collect the values within each group. Here, it says: "for each key (sharer), collect all matching SharedCollection items into a List." This is what produces the List<SharedCollection> as the map's value type.
+//        here- this map- collects all shared collections which have same shareBy.userId and put then in single list and use this list as value of a Map-pair and add this list-value to sharedBy.userId(integer) as Key of same pair- instead of creating multiple pairs with same key/shardBy.userId
+//        this returns array-objects as json- where single object has single user details and combined shared collections details over time(till now- not based on hrs)
         Map<Integer, List<SharedCollection>> grouped = shares.stream()
                 .collect(Collectors.groupingBy(
-                        s -> s.getSharedBy().getUserId(),
-                        LinkedHashMap::new,
-                        Collectors.toList()
+                        s -> s.getSharedBy().getUserId(),  // group key: sharer's userId
+                        LinkedHashMap::new,                 // preserve insertion order in the result map
+                        Collectors.toList()                 // collect each group's items into a List
                 ));
 
         return grouped.values().stream()
