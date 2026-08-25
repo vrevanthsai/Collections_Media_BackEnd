@@ -51,4 +51,10 @@ public class ShareCollectionController {
     public ApiResponse<List<GroupedShareDto>> getGroupedShares(@AuthenticationPrincipal UserEntity currentUser, @RequestParam RecommendationsTabType tabType) {
         return ApiResponse.success(shareService.getGroupedSharesFromFriends(currentUser.getUserId(), tabType));
     }
+
+    @PatchMapping("/{shareId}/watch-list")
+    public ApiResponse<String> markWatchList(@PathVariable Integer shareId, @RequestParam Boolean isWatchList, @PathVariable Integer userId) {
+        shareService.markAsWatchList(shareId, isWatchList, userId);
+        return ApiResponse.success("Shared/Recommended Collection watchlist status updated");
+    }
 }

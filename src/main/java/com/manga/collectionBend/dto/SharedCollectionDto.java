@@ -19,8 +19,9 @@ public class SharedCollectionDto {
     private String categoryName;
     private String sharedByUsername;
     private LocalDateTime sharedAt;
-    private boolean isViewed;
+    private boolean isViewed; // is- work is removed from var-name only sends - viewed var-name to frondend- response JSON
     private ShareActionStatus actionStatus;
+    private boolean isAddedToWatchlist;
 
     public static SharedCollectionDto fromEntity(SharedCollection share) {
         return SharedCollectionDto.builder()
@@ -32,6 +33,7 @@ public class SharedCollectionDto {
                 .sharedByUsername(share.getSharedBy().getUniqueUsername())
                 .sharedAt(share.getSharedAt())
                 .isViewed(share.isViewed())
+                .isAddedToWatchlist(share.isAddedToWatchlist())
                 .actionStatus(share.getActionStatus())
                 .build();
     }

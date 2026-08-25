@@ -43,5 +43,8 @@ public class SharedCollection {
 
     // did the recipient act on it — e.g. "whether he liked it or added to his watch list or dismissed"
     @Enumerated(EnumType.STRING)
-    private ShareActionStatus actionStatus; // PENDING, ADD_TO_WATCH_LIST, LIKED, DISMISSED
+    private ShareActionStatus actionStatus; // PENDING, LIKED, DISMISSED
+
+    @Column(nullable = false)
+    private boolean isAddedToWatchlist = false;
 }

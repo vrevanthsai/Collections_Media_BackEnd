@@ -236,4 +236,21 @@ public class ShareCollectionService {
                 })
                 .toList();
     }
+
+    public void markAsWatchList(Integer shareId, Boolean isWatchList, Integer userId) {
+        var share = sharedCollectionRepo.findById(shareId)
+                .orElseThrow(() -> new RuntimeException("Share not found"));
+        if(share.getSharedWith().getUserId().equals(userId)) {
+//            logic used for toggling in Frontend Watch button- where user can add or remove a recommended collections from his WatchList tab/page
+            if(isWatchList){
+                share.setAddedToWatchlist(true);
+                sharedCollectionRepo.save(share);
+            } else {
+                share.setAddedToWatchlist(false);
+                sharedCollectionRepo.save(share);
+            }
+        } else {
+            throw new IllegalStateException("You can not update this shared collection watchlist status- only Receiver user must update!");
+        }
+    }
 }
