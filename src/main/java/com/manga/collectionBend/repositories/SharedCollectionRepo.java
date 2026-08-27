@@ -18,6 +18,9 @@ public interface SharedCollectionRepo extends JpaRepository<SharedCollection, In
 
     List<SharedCollection> findBySharedBy_UserIdOrderBySharedAtDesc(Integer userId);
 
+//    if will find currentUserId in SharedWith column of table and checks for isAddedToWatchlist columns which are marked as true(1) value in DB and order them in Desc order(latest first) and returns all in list
+    List<SharedCollection> findBySharedWith_UserIdAndIsAddedToWatchlistTrueOrderBySharedAtDesc(Integer userId);
+
     List<SharedCollection> findBySharedWith_UserIdAndIsViewedFalse(Integer userId);
 
     long countBySharedWith_UserIdAndIsViewedFalse(Integer userId);

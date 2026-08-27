@@ -197,9 +197,14 @@ public class ShareCollectionService {
         if(tabType == RecommendationsTabType.SHARE_WITH_ME){
             // fetch all shares received by this user, most recent first
             shares = sharedCollectionRepo.findBySharedWith_UserIdOrderBySharedAtDesc(userId);
-        } else {
+        } else if(tabType == RecommendationsTabType.SHARE_BY_ME) {
 //            fetch all shares sent by this user to his friends
             shares = sharedCollectionRepo.findBySharedBy_UserIdOrderBySharedAtDesc(userId);
+        } else if(tabType == RecommendationsTabType.MY_WATCH_LIST) {
+//            fetch all shares which are marked as WatchList(true) by SharedWith user(receiver)
+            shares = sharedCollectionRepo.findBySharedWith_UserIdAndIsAddedToWatchlistTrueOrderBySharedAtDesc(userId);
+        } else {
+            return null;
         }
 
         // group shares by who sent them, preserving insertion order (most recent sharer group first)
@@ -217,7 +222,8 @@ public class ShareCollectionService {
         return grouped.values().stream()
                 .map(group -> {
                     UserEntity sharer;
-                    if(tabType == RecommendationsTabType.SHARE_WITH_ME){
+//                    Sharer/User details
+                    if(tabType == RecommendationsTabType.SHARE_WITH_ME || tabType == RecommendationsTabType.MY_WATCH_LIST) {
 //                        sharer = who shared/recommended collections with/to me
                         sharer = group.get(0).getSharedBy(); // same sharer across the whole group
                     } else {

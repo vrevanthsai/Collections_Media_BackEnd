@@ -46,6 +46,7 @@ public class ShareCollectionController {
         return ApiResponse.success("Status updated");
     }
 
+    //    This one GET-Api is used for fetching data of all 3 tabs(SHARE_WITH_ME, SHARE_BY_ME, MY_WATCH_LIST) in recommendation page
 //    this api used for Shared Collections or Recommendations page to get total shared/recommended collections by multiple friend users or user recommended to his friends
     @GetMapping("/get-recommendations")
     public ApiResponse<List<GroupedShareDto>> getGroupedShares(@AuthenticationPrincipal UserEntity currentUser, @RequestParam RecommendationsTabType tabType) {
