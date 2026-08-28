@@ -173,12 +173,18 @@ public class CollectionServiceImpl implements CollectionService{
         //        where otherUser can access/view current user's single collection page data from user-view page/api
 //        only Collections marked as Public or Friends - these are only viewed by otherUser- preventing Private marked collections from viewing
 //      if viewing user is this collection creator then we do not restrict him for viewing his own private collection data
-//        TODO- create a extra if() check to prevent otherUser to view this collection if they are not friends
         //        we also allow otherUser/viewingUser to view this single collection data- when collection is marked as private but 2 users(both collection-creator and viewingUser) must be friends and share-collection record must exist between them
         boolean privateViewingCondition = false;
-        privateViewingCondition = Objects.equals(collection.getPrivacy(), CollectionPrivacy.PRIVATE) && (friendConnection.get().getStatus() == FriendStatus.ACCEPTED) && sharedCollectionExist;
-
-        if(Objects.equals(collection.getUserId().getUserId(), userId) || Objects.equals(collection.getPrivacy(), CollectionPrivacy.PUBLIC) || Objects.equals(collection.getPrivacy(), CollectionPrivacy.FRIENDS) || privateViewingCondition) {
+        if(friendConnection.isPresent()){
+            privateViewingCondition = Objects.equals(collection.getPrivacy(), CollectionPrivacy.PRIVATE) && (friendConnection.get().getStatus() == FriendStatus.ACCEPTED) && sharedCollectionExist;
+        }
+        //  a extra if() check to prevent otherUser to view this collection if they are not friends
+        boolean friendsViewingCondition = false;
+        if(friendConnection.isPresent()){
+            friendsViewingCondition = Objects.equals(collection.getPrivacy(), CollectionPrivacy.FRIENDS) && (friendConnection.get().getStatus() == FriendStatus.ACCEPTED);
+        }
+//     1)  only user can view his collection with any Privacy value or 2) a stranger can view only Public marked collection or 3) a friend-user can only view Friends-marked collection(if both are friends only) or 4) a Friend-user can view Private-marked collection also only if other user shared himself(one way direction= sharedCollectionExist) and both must be friends
+        if(Objects.equals(collection.getUserId().getUserId(), userId) || Objects.equals(collection.getPrivacy(), CollectionPrivacy.PUBLIC) || friendsViewingCondition || privateViewingCondition) {
             //        map to collectionDto object and return it
             response = new CollectionDto(
                     collection.getCollectionId(),
