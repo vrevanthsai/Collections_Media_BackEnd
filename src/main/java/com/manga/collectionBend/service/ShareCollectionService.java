@@ -45,6 +45,8 @@ public class ShareCollectionService {
 
         // tracks friends who were skipped entirely or only partially fulfilled, for the response summary
         List<String> skippedRecipients = new ArrayList<>();
+        // tracks duplicate-share skips - this new array divides collections into alreadySharedMsg and newCollections to avoid duplicate entries
+        List<String> alreadySharedMessages = new ArrayList<>();
         int totalSharesCreated = 0;
 
         // fetch all requested collections in one query
@@ -85,13 +87,39 @@ public class ShareCollectionService {
             long remainingQuota = MAX_SHARES_PER_WINDOW - recentCount;
 
             if (remainingQuota <= 0) {
-                // this friend has no quota left at all — skip them entirely- his limit of 5 shares completed
+                // this friend has no quota left at all — skip them entirely - his limit of 5 shares completed
                 var friendEntity = userRepo.findById(friendId).orElseThrow();
-                skippedRecipients.add(friendEntity.getUniqueUsername()); // use these usernames in frontend to show this friends share limit is done , so share after 2 hrs
+//                if already shared collection is given then also, it will only skip this friend iteration and go to next friend iteration instead of adding this into alreadySharedMsg array due to limit reached
+                skippedRecipients.add(friendEntity.getUniqueUsername() + " ,Reason:- this friend share limit reached max"); // use these usernames in frontend to show this friends share limit is done , so share after 2 hrs
                 continue; // skip this friend iteration and go to next
             }
 
             var friendRef = userRepo.getReferenceById(friendId);
+            var friendEntity = userRepo.findById(friendId).orElseThrow();
+
+//            duplication check/validation logic
+            // filter out collections already shared with this specific friend- to prevent duplicate entries into SharedCollections table which already has shared collection with a user-friend
+            List<CollectionEntity> newCollectionsOnly = new ArrayList<>();
+            for (CollectionEntity collection : collections) {
+                boolean alreadyShared = sharedCollectionRepo
+                        .existsByCollection_CollectionIdAndSharedWith_UserId(collection.getCollectionId(), friendId);
+
+                if (alreadyShared) {
+                    // Here if userA already shared collection-101 with userB then - we add its msg and below in else block - newCollectionsOnly array will be empty
+                    // - then in line 117 if() block - this friend-userB iteration will be skipped - so that below 117 lines- save sharedCollection logic will not run and new iteration of next userC-friend will start
+//                    this will prevent duplicate entries and also send custom msg to frontend
+                    alreadySharedMessages.add(
+                            "\"" + collection.getName() + "\" collection was already shared with " + friendEntity.getUniqueUsername() +" friend");
+                } else {
+//                    if this collection-101 is not shared from userA to userB then it will be added to this newCollectionsOnly var then in line 116 if() will not run and continue with save sharedCollection logic because its a new entry with is not shared yet
+                    newCollectionsOnly.add(collection);
+                }
+            }
+
+            if (newCollectionsOnly.isEmpty()) {
+//                this skips this iteration of a friend and does not run below save logic and goes to next user-friendId and undergoes same duplication check/validation logic
+                continue; // nothing new to share with this friend, skip entirely
+            }
 
             // only take as many collections as this friend's remaining quota allows (partial fill)
 //            for example - Positive case- if A user shares 2 collections to B and B has 3 remaining quotes/slots(remaining 2 already shared by A to B) within 2 hrs
@@ -99,9 +127,10 @@ public class ShareCollectionService {
 //            Negative case- if A user shares 4 collections to B and B has only 3 remaining quotes/slots(remaining 2 already shared by A to B) within 2 hrs
 //            - then only first 3 collections from share list of A will be sent to B because B only has 3 slots and last unshared collection of A share list will not be considered and B reaches 5 max-slot size for that 2 hrs
 //            final case - after 2 hrs again freshly- A can share upto 5 collections to B (B's limit is reset) and after same process continues
-            List<CollectionEntity> collectionsToShare = collections.size() <= remainingQuota
-                    ? collections
-                    : collections.subList(0, (int) remainingQuota);
+            //  apply quota on top of the FILTERED list — must use newCollectionsOnly
+            List<CollectionEntity> collectionsToShare = newCollectionsOnly.size() <= remainingQuota
+                    ? newCollectionsOnly
+                    : newCollectionsOnly.subList(0, (int) remainingQuota);
 
             Integer lastShareId = null; // used to anchor the grouped notification to the latest share row
 
@@ -132,8 +161,7 @@ public class ShareCollectionService {
             // flag if this friend only received a subset due to hitting their quota mid-way
 //            this skippedRecipients- are friends of A user where their total share collections list is trimmed/subset and send from A to these friends
             if (collectionsToShare.size() < collections.size()) {
-                var friendEntity = userRepo.findById(friendId).orElseThrow();
-                skippedRecipients.add(friendEntity.getUniqueUsername() + " (partial — quota reached)");
+                skippedRecipients.add(friendEntity.getUniqueUsername() + " Reason:- (partial — quota reached or collection already shared)");
             }
         }
 
@@ -142,6 +170,7 @@ public class ShareCollectionService {
         return ShareResultDto.builder()
                 .totalSharesCreated(totalSharesCreated)
                 .skippedOrPartialRecipients(skippedRecipients)
+                .alreadySharedMessages(alreadySharedMessages)
                 .build();
     }
 

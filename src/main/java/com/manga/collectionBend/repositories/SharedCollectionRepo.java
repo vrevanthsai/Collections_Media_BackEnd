@@ -44,4 +44,7 @@ public interface SharedCollectionRepo extends JpaRepository<SharedCollection, In
         WHERE (sc.sharedBy.userId = :userA AND sc.sharedWith.userId = :userB)
         """)
     boolean existsBetween(@Param("userA") Integer userA, @Param("userB") Integer userB);
+
+//    Checks if a collectionId already shared with some-user-friendId(currentUserId not required here, because collectionId are unique)
+    boolean existsByCollection_CollectionIdAndSharedWith_UserId(Integer collectionId, Integer sharedWithUserId);
 }
