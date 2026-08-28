@@ -243,7 +243,10 @@ public class ShareCollectionService {
 //        this returns array-objects as json- where single object has single user details and combined shared collections details over time(till now- not based on hrs)
         Map<Integer, List<SharedCollection>> grouped = shares.stream()
                 .collect(Collectors.groupingBy(
-                        s -> s.getSharedBy().getUserId(),  // group key: sharer's userId
+                        //  pick the correct grouping key based on which "side" of the share we're viewing
+                        s -> tabType == RecommendationsTabType.SHARE_BY_ME
+                                ? s.getSharedWith().getUserId()  // group by RECIPIENT when viewing "shared by me"
+                                : s.getSharedBy().getUserId(),   // group by SENDER when viewing "shared with me" / watchlist
                         LinkedHashMap::new,                 // preserve insertion order in the result map
                         Collectors.toList()                 // collect each group's items into a List
                 ));

@@ -12,7 +12,8 @@ import java.util.List;
 @Builder
 public class GroupedShareDto {
 
-    private Integer sharedByUserId;     // id of the friend who shared these collections
+    // sharedBy or sharedWith user details
+    private Integer sharedByUserId;   // id of the friend who shared or received these collections
     private String sharedByUsername;    // username of the sharer, shown in notification/list UI
     private String sharedByImageName;   // sharer's avatar, for display next to the group
 
