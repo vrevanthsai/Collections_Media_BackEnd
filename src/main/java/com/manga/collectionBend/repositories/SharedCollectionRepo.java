@@ -25,6 +25,15 @@ public interface SharedCollectionRepo extends JpaRepository<SharedCollection, In
 
     long countBySharedWith_UserIdAndIsViewedFalse(Integer userId);
 
+//    custom JPQL method- for finding Share collection record based its shareId and also checks if currentUserId exists in either shareBy or shareWith then only returns sharedCollection record data
+//    this method is used for deleting share collection record which works for both sides- Share-By-me tab or Share-with-me tab
+    @Query("""
+    SELECT s FROM SharedCollection s
+    WHERE s.id = :shareId
+      AND (s.sharedWith.userId = :userId OR s.sharedBy.userId = :userId)
+    """)
+    SharedCollection findShareIdAndUserExists(Integer userId, Integer shareId);
+
     @Query("""
     SELECT COUNT(s) FROM SharedCollection s
     WHERE s.sharedBy.userId = :sharerId

@@ -6,6 +6,8 @@ import com.manga.collectionBend.service.ShareCollectionService;
 import com.manga.collectionBend.utils.RecommendationsTabType;
 import com.manga.collectionBend.utils.ShareActionStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,5 +59,17 @@ public class ShareCollectionController {
     public ApiResponse<String> markWatchList(@PathVariable Integer shareId, @RequestParam Boolean isWatchList, @PathVariable Integer userId) {
         shareService.markAsWatchList(shareId, isWatchList, userId);
         return ApiResponse.success("Shared/Recommended Collection watchlist status updated");
+    }
+
+//    Delete API- which deletes the shared collection record by either side of currentUserId on ShareBy or ShareWith with provided shareId
+//    if shareWith user deletes a share collection record then - the actual shareBy user also gets his sharedBy data of this record gone automatically
+    @DeleteMapping("/delete-share/{shareId}")
+    public ResponseEntity<ApiResponse<String>> deleteSharedCollection(@PathVariable Integer userId, @PathVariable Integer shareId) { // userId from parent mapping
+        ApiResponse<String> response = shareService.deleteShareCollection(userId, shareId);
+        if(response.isSuccess()) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.manga.collectionBend.service;
 
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.UserRepo;
+import com.manga.collectionBend.dto.ApiResponse;
 import com.manga.collectionBend.dto.GroupedShareDto;
 import com.manga.collectionBend.dto.ShareResultDto;
 import com.manga.collectionBend.dto.SharedCollectionDto;
@@ -72,7 +73,7 @@ public class ShareCollectionService {
         var sharerRef = userRepo.getReferenceById(sharerId);
 
         // process each selected friend independently, so one friend's limit doesn't block others
-//        limit - a user can only share 5 collections to his friends per 2 hrs and TODO- only for 10 friends in 2 hrs
+//        limit - a user can only share 5 collections to his friends per 2 hrs and only for 10 friends in 2 hrs or In Frontend add limit of only 5 friends can be selected to be shared at once , not all friends at once
         for (Integer friendId : friendUserIds) {
 
             // only share with users who are actually accepted friends
@@ -90,7 +91,7 @@ public class ShareCollectionService {
                 // this friend has no quota left at all — skip them entirely - his limit of 5 shares completed
                 var friendEntity = userRepo.findById(friendId).orElseThrow();
 //                if already shared collection is given then also, it will only skip this friend iteration and go to next friend iteration instead of adding this into alreadySharedMsg array due to limit reached
-                skippedRecipients.add(friendEntity.getUniqueUsername() + " ,Reason:- this friend share limit reached max"); // use these usernames in frontend to show this friends share limit is done , so share after 2 hrs
+                skippedRecipients.add(friendEntity.getUniqueUsername() + "Friend ,Reason:- this friend share limit reached max(2 shares per 1hr)"); // use these usernames in frontend to show this friends share limit is done , so share after 2 hrs
                 continue; // skip this friend iteration and go to next
             }
 
@@ -289,6 +290,22 @@ public class ShareCollectionService {
             }
         } else {
             throw new IllegalStateException("You can not update this shared collection watchlist status- only Receiver user must update!");
+        }
+    }
+
+    public ApiResponse<String> deleteShareCollection(Integer userId, Integer shareId) {
+        SharedCollection existingShare = sharedCollectionRepo.findShareIdAndUserExists(userId, shareId);
+        if(existingShare != null) {
+//            System.out.println(existingShare.getSharedAt()); // for debugging
+            if(existingShare.getSharedWith().getUserId().equals(userId) || existingShare.getSharedBy().getUserId().equals(userId)) {
+                sharedCollectionRepo.delete(existingShare);
+                return ApiResponse.success("Shared/Recommended Collection deleted successfully and this data will not be shown to both ShareBy user and ShareWith user");
+            } else {
+                return ApiResponse.error("only linked shared users can delete this shared collection, others can not delete or access this shared collection");
+            }
+        } else {
+//            throw new IllegalStateException("No Share Collection exists for provided shareId and userId!");
+            return ApiResponse.error("No Share Collection exists for provided shareId and userId!");
         }
     }
 }
