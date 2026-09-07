@@ -34,6 +34,14 @@ public interface SharedCollectionRepo extends JpaRepository<SharedCollection, In
     """)
     SharedCollection findShareIdAndUserExists(Integer userId, Integer shareId);
 
+//    used for finding total shared collections between 2 users and used when unfriend is done which finds total shares and removes/deletes all permanently
+    @Query("""
+        SELECT s FROM SharedCollection s
+        WHERE (s.sharedWith.userId = :userA AND s.sharedBy.userId = :userB)
+           OR (s.sharedBy.userId = :userA AND s.sharedWith.userId = :userB)
+        """)
+    List<SharedCollection> findSharesBetweenTwoUsers(@Param("userA") Integer userA, @Param("userB") Integer userB);
+
     @Query("""
     SELECT COUNT(s) FROM SharedCollection s
     WHERE s.sharedBy.userId = :sharerId

@@ -122,4 +122,10 @@ public class NotificationService {
             throw new IllegalStateException("your userId: "+ userId +" is not matching recipientId, so deleting this notification is not possible");
         }
     }
+
+    //    removes all linked shared collection or friend connection Types based notification based on referenceIds(shareId) provided
+    @Transactional
+    public void removeAllNotificationsByReferenceIds(List<Integer> referenceIds, NotificationType type) {
+        notificationRepo.deleteAllByReferenceIdsAndType(referenceIds, type);
+    }
 }

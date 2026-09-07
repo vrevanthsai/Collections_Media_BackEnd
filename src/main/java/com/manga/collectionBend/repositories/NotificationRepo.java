@@ -34,4 +34,9 @@ public interface NotificationRepo extends JpaRepository<NotificationEntity, Inte
     @Modifying
     @Query("DELETE FROM NotificationEntity n WHERE n.referenceId = :referenceId AND n.type IN ('COLLECTION_LIKED')") // referenceId = sharedId which has LIKED status
     void deleteByReferenceIdForCollectionLikedType(@Param("referenceId") Integer referenceId);
+
+//    removes all linked shared collection or friend connection Types based notification based on referenceIds(shareId) provided
+    @Modifying
+    @Query("DELETE FROM NotificationEntity n WHERE n.referenceId IN :referenceIds AND n.type = :type")
+    void deleteAllByReferenceIdsAndType(@Param("referenceIds") List<Integer> referenceIds, @Param("type") NotificationType type);
 }
