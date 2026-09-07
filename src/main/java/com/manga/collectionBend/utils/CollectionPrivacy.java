@@ -1,6 +1,6 @@
 package com.manga.collectionBend.utils;
 
-public enum CollectionProgress {
+public enum CollectionPrivacy {
     PUBLIC,
     PRIVATE,
     FRIENDS

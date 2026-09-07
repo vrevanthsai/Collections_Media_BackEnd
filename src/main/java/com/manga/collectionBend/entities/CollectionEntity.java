@@ -1,9 +1,12 @@
 package com.manga.collectionBend.entities;
 
 import com.manga.collectionBend.auth.entities.UserEntity;
-import com.manga.collectionBend.utils.CollectionProgress;
+import com.manga.collectionBend.utils.CollectionPrivacy;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 //@NoArgsConstructor
@@ -12,7 +15,7 @@ import jakarta.validation.constraints.*;
 @Table(name = "collection")
 public class CollectionEntity {
 
-    public CollectionEntity(Integer collectionId, String name, CategoryEntity category, UserEntity userId, Integer rating, String review, String progress, CollectionProgress privacy, String addedDate, String imagename) {
+    public CollectionEntity(Integer collectionId, String name, CategoryEntity category, UserEntity userId, Integer rating, String review, String progress, CollectionPrivacy privacy, String addedDate, String imagename) {
         this.collectionId = collectionId;
         this.name = name;
         this.category = category;
@@ -62,7 +65,7 @@ public class CollectionEntity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private CollectionProgress privacy; // PUBLIC, PRIVATE, FRIENDS
+    private CollectionPrivacy privacy; // PUBLIC, PRIVATE, FRIENDS
 
     @Column(nullable = false)
     @NotBlank(message = "Please provide collection's created Date")
@@ -72,6 +75,11 @@ public class CollectionEntity {
     @Column(nullable = true, length = 300)
 //    @NotBlank(message = "Please provide collection's imagename")
     private String imagename;
+
+//    this var used for auto-deleting linked child records in SharedCollection table when its linked parent collection record is deleted in this Collections table
+    // when this collection is deleted, all shares referencing it are cleaned up too
+    @OneToMany(mappedBy = "collection", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SharedCollection> shares = new ArrayList<>();
 
     public Integer getCollectionId() {
         return collectionId;
@@ -129,11 +137,11 @@ public class CollectionEntity {
         this.progress = progress;
     }
 
-    public CollectionProgress getPrivacy() {
+    public CollectionPrivacy getPrivacy() {
         return privacy;
     }
 
-    public void setPrivacy(CollectionProgress privacy) {
+    public void setPrivacy(CollectionPrivacy privacy) {
         this.privacy = privacy;
     }
 

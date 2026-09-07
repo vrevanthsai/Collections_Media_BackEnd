@@ -16,6 +16,9 @@ public class NotificationDto {
     private Integer id;
     private NotificationType type;
     private Integer referenceId;
+    private Integer sharesCount;
+    private Integer collectionId;
+    private String collectionName;
     private boolean isRead;
     private LocalDateTime createdAt;
     private Integer actorUserId;
@@ -29,6 +32,9 @@ public class NotificationDto {
                 .id(notification.getId())
                 .type(notification.getType())
                 .referenceId(notification.getReferenceId())
+                .sharesCount(notification.getSharesCount()) // will be null value for all friend_connection types and only has count value for Collection Shared type notification
+                .collectionId(notification.getCollectionId())
+                .collectionName(notification.getCollectionName())
                 .isRead(notification.isRead())
                 .createdAt(notification.getCreatedAt())
                 .actorUserId(actor != null ? actor.getUserId() : null)

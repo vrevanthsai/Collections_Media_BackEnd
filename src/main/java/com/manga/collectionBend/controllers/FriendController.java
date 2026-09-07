@@ -50,8 +50,8 @@ public class FriendController {
 
     @DeleteMapping("/unfriend/{otherUserId}")
     public ApiResponse<String> unfriend(@PathVariable Integer otherUserId, @AuthenticationPrincipal UserEntity currentUser) {
-        friendService.unfriend(currentUser.getUserId(), otherUserId);
-        return ApiResponse.success("Unfriended successfully");
+        String response = friendService.unfriend(currentUser.getUserId(), otherUserId);
+        return ApiResponse.success(response);
     }
 
     @PostMapping("/block/{targetUserId}")

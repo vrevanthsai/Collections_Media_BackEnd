@@ -21,12 +21,44 @@ public class NotificationService {
         this.notificationRepo = notificationRepo;
     }
 
+//    This method(4 params) used for Friend Connection Types(friend_request, friend-accepted , etc)
     public void createNotification(UserEntity recipient, UserEntity actor, NotificationType type, Integer referenceId) {
         NotificationEntity notification = NotificationEntity.builder()
                 .recipient(recipient)
                 .actor(actor)
                 .type(type)
                 .referenceId(referenceId)
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+        notificationRepo.save(notification);
+    }
+
+//    This method(5 params) used for Collection Shared type
+    public void createNotification(UserEntity recipient, UserEntity actor, NotificationType type,
+                                   Integer referenceId, Integer count) {
+        NotificationEntity notification = NotificationEntity.builder()
+                .recipient(recipient)
+                .actor(actor)
+                .type(type)
+                .referenceId(referenceId)
+                .sharesCount(count)
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+        notificationRepo.save(notification);
+    }
+
+    //    This method(6 params) used for Collection Liked type
+    public void createNotification(UserEntity recipient, UserEntity actor, NotificationType type,
+                                   Integer referenceId, Integer collectionId, String collectionName) {
+        NotificationEntity notification = NotificationEntity.builder()
+                .recipient(recipient)
+                .actor(actor)
+                .type(type)
+                .referenceId(referenceId)
+                .collectionId(collectionId)
+                .collectionName(collectionName)
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -75,6 +107,12 @@ public class NotificationService {
         notificationRepo.deleteAllByReferenceIdForFriendTypes(referenceId);
     }
 
+//    Removes a single row liked to Collection_liked type
+    @Transactional
+    public void removeNotificationByReferenceIdForCollectionLikedType(Integer referenceId) {
+        notificationRepo.deleteByReferenceIdForCollectionLikedType(referenceId); // here referenceId = sharedId which has LIKED status
+    }
+
     public void deleteNotificationHandler(Integer notificationId, Integer userId) {
         var notification =  notificationRepo.findById(notificationId).orElseThrow(() -> new RuntimeException("Notification not found"));
 //        we only delete notification record if provided userId is same as recipient(userId- who received notification) is present in the existing notification record
@@ -83,5 +121,11 @@ public class NotificationService {
         } else {
             throw new IllegalStateException("your userId: "+ userId +" is not matching recipientId, so deleting this notification is not possible");
         }
+    }
+
+    //    removes all linked shared collection or friend connection Types based notification based on referenceIds(shareId) provided
+    @Transactional
+    public void removeAllNotificationsByReferenceIds(List<Integer> referenceIds, NotificationType type) {
+        notificationRepo.deleteAllByReferenceIdsAndType(referenceIds, type);
     }
 }

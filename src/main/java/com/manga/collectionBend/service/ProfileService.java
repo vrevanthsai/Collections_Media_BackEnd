@@ -7,9 +7,8 @@ import com.manga.collectionBend.dto.*;
 import com.manga.collectionBend.entities.CollectionEntity;
 import com.manga.collectionBend.repositories.CollectionRepo;
 import com.manga.collectionBend.repositories.FriendConnectionRepo;
-import com.manga.collectionBend.utils.CollectionProgress;
+import com.manga.collectionBend.utils.CollectionPrivacy;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -244,7 +243,7 @@ public class ProfileService {
 //            we only need image loading in Single Collection page - so sending with image details are not needed here
             String collectionUrl = "";
 //            First Store all OtherUser's collections list marked as PUBLIC - even if he is a stranger or a frind of currentUser
-            if(collection.getPrivacy().equals(CollectionProgress.PUBLIC)) {
+            if(collection.getPrivacy().equals(CollectionPrivacy.PUBLIC)) {
                 CollectionDto collectionDto = new CollectionDto(
                         collection.getCollectionId(),
                         collection.getName(),
@@ -267,7 +266,7 @@ public class ProfileService {
             boolean isFriend = friendConnectionRepo.existsBetween(currentUserId, otherUserId);
             if(isFriend) {
                 // if both are friends then add/send otherUser collections which are Marked as FRIENDS as a privacy
-                if(collection.getPrivacy().equals(CollectionProgress.FRIENDS)) {
+                if(collection.getPrivacy().equals(CollectionPrivacy.FRIENDS)) {
                     CollectionDto collectionDto = new CollectionDto(
                             collection.getCollectionId(),
                             collection.getName(),

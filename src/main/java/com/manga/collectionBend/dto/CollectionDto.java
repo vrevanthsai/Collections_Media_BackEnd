@@ -1,6 +1,6 @@
 package com.manga.collectionBend.dto;
 
-import com.manga.collectionBend.utils.CollectionProgress;
+import com.manga.collectionBend.utils.CollectionPrivacy;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
@@ -11,7 +11,7 @@ import lombok.Data;
 //@AllArgsConstructor
 public class CollectionDto {
 
-    public CollectionDto(Integer collectionId, String name, Integer category, Integer userId, String username, Integer rating, String review, String progress, CollectionProgress privacy, String addedDate, String imagename, String imageUrl) {
+    public CollectionDto(Integer collectionId, String name, Integer category, Integer userId, String username, Integer rating, String review, String progress, CollectionPrivacy privacy, String addedDate, String imagename, String imageUrl) {
         this.collectionId = collectionId;
         this.name = name;
         this.category = category;
@@ -55,7 +55,7 @@ public class CollectionDto {
     private String progress;
 
     @Enumerated(EnumType.STRING)
-    private CollectionProgress privacy; // PUBLIC, PRIVATE, FRIENDS
+    private CollectionPrivacy privacy; // PUBLIC, PRIVATE, FRIENDS
 
     @NotBlank(message = "Please provide collection's created Date")
 //    private Date addedDate;
@@ -139,11 +139,11 @@ public class CollectionDto {
         this.progress = progress;
     }
 
-    public CollectionProgress getPrivacy() {
+    public CollectionPrivacy getPrivacy() {
         return privacy;
     }
 
-    public void setPrivacy(CollectionProgress privacy) {
+    public void setPrivacy(CollectionPrivacy privacy) {
         this.privacy = privacy;
     }
 

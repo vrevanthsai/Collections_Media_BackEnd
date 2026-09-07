@@ -1,0 +1,75 @@
+package com.manga.collectionBend.controllers;
+
+import com.manga.collectionBend.auth.entities.UserEntity;
+import com.manga.collectionBend.dto.*;
+import com.manga.collectionBend.service.ShareCollectionService;
+import com.manga.collectionBend.utils.RecommendationsTabType;
+import com.manga.collectionBend.utils.ShareActionStatus;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@CrossOrigin(origins = "*")
+@RequestMapping("/api/v1/user/{userId}/shares")
+@RequiredArgsConstructor
+public class ShareCollectionController {
+    private final ShareCollectionService shareService;
+
+    @PostMapping("/share-collection")
+    public ApiResponse<ShareResultDto> shareCollections(
+            @RequestBody ShareRequest request,
+            @AuthenticationPrincipal UserEntity currentUser) {
+        ShareResultDto result = shareService.shareCollections(
+                request.getCollectionIds(), currentUser.getUserId(), request.getFriendUserIds());
+        return ApiResponse.success(result);
+    }
+
+//    Not using this Api anymore - it's linked in /get-recommendations api below
+//    Api which sends list/data about total shared Collections list done by A user to their friends till now
+    @GetMapping("/shareby-me")
+    public ApiResponse<List<SharedCollectionDto>> getSharedWithMe(@AuthenticationPrincipal UserEntity currentUser) {
+        return ApiResponse.success(shareService.getSharedByMe(currentUser.getUserId()));
+    }
+
+    @PatchMapping("/{shareId}/viewed")
+    public ApiResponse<String> markViewed(@PathVariable Integer shareId, @PathVariable Integer userId) { // userId from parent mapping
+        shareService.markAsViewed(shareId, userId);
+        return ApiResponse.success("Marked as viewed");
+    }
+
+    @PatchMapping("/{shareId}/action")
+    public ApiResponse<String> updateAction(@PathVariable Integer shareId, @RequestParam ShareActionStatus status, @PathVariable Integer userId) {
+        shareService.updateActionStatus(shareId, status, userId);
+        return ApiResponse.success("Status updated");
+    }
+
+    //    This one GET-Api is used for fetching data of all 3 tabs(SHARE_WITH_ME, SHARE_BY_ME, MY_WATCH_LIST) in recommendation page
+//    this api used for Shared Collections or Recommendations page to get total shared/recommended collections by multiple friend users or user recommended to his friends
+    @GetMapping("/get-recommendations")
+    public ApiResponse<List<GroupedShareDto>> getGroupedShares(@AuthenticationPrincipal UserEntity currentUser, @RequestParam RecommendationsTabType tabType) {
+        return ApiResponse.success(shareService.getGroupedSharesFromFriends(currentUser.getUserId(), tabType));
+    }
+
+    @PatchMapping("/{shareId}/watch-list")
+    public ApiResponse<String> markWatchList(@PathVariable Integer shareId, @RequestParam Boolean isWatchList, @PathVariable Integer userId) {
+        shareService.markAsWatchList(shareId, isWatchList, userId);
+        return ApiResponse.success("Shared/Recommended Collection watchlist status updated");
+    }
+
+//    Delete API- which deletes the shared collection record by either side of currentUserId on ShareBy or ShareWith with provided shareId
+//    if shareWith user deletes a share collection record then - the actual shareBy user also gets his sharedBy data of this record gone automatically
+    @DeleteMapping("/delete-share/{shareId}")
+    public ResponseEntity<ApiResponse<String>> deleteSharedCollection(@PathVariable Integer userId, @PathVariable Integer shareId) { // userId from parent mapping
+        ApiResponse<String> response = shareService.deleteShareCollection(userId, shareId);
+        if(response.isSuccess()) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+    }
+}

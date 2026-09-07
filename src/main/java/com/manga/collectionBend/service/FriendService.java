@@ -5,9 +5,12 @@ import com.manga.collectionBend.dto.ApiResponse;
 import com.manga.collectionBend.dto.FriendConnectionDto;
 import com.manga.collectionBend.dto.FriendDto;
 import com.manga.collectionBend.entities.FriendConnection;
+import com.manga.collectionBend.entities.SharedCollection;
 import com.manga.collectionBend.repositories.FriendConnectionRepo;
+import com.manga.collectionBend.repositories.SharedCollectionRepo;
 import com.manga.collectionBend.utils.FriendStatus;
 import com.manga.collectionBend.utils.NotificationType;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +25,7 @@ public class FriendService {
     private final FriendConnectionRepo friendConnectionRepo;
     private final UserRepo userRepo;
     private final NotificationService notificationService;
+    private final SharedCollectionRepo sharedCollectionRepo;
 
     public ApiResponse<String> sendFriendRequest(Integer requesterId, Integer receiverId) {
         if (requesterId.equals(receiverId)) {
@@ -93,15 +97,40 @@ public class FriendService {
                 .toList();
     }
 
-    public void unfriend(Integer myUserId, Integer otherUserId) {
+    @Transactional
+    public String unfriend(Integer myUserId, Integer otherUserId) {
         var connection = friendConnectionRepo.findAcceptedBetween(myUserId, otherUserId)
                 .orElseThrow(() -> new RuntimeException("Not friends"));
 
         Integer connectionId = connection.getId();
         friendConnectionRepo.delete(connection);
 
-        // also clean up any lingering notifications tied to this connection
+        // clean up friend-request/accepted notifications tied to this connection
         notificationService.removeAllNotificationsByReference(connectionId);
+
+        // find all shared collections between these two users (both directions)
+        List<SharedCollection> sharedCollections = sharedCollectionRepo.findSharesBetweenTwoUsers(myUserId, otherUserId);
+        int totalShares = sharedCollections.size();
+
+        // collect the share ids BEFORE deleting them, so we can clean up their notifications too
+        List<Integer> shareIds = sharedCollections.stream()
+                .map(SharedCollection::getId)
+                .toList();
+
+        // bulk delete the share rows themselves - which removes all provided sharedCollection records present in SharedCollection table at one single operation instead of looping which handles by Hibernate
+        sharedCollectionRepo.deleteAll(sharedCollections);
+
+//        or for(SharedCollection sharedCollection : sharedCollections){
+////            delete each share individually
+//            sharedCollectionRepo.delete(sharedCollection);
+//        }
+
+        // ✅ clean up any COLLECTION_SHARED notifications that referenced these now-deleted shares
+        if (!shareIds.isEmpty()) {
+            notificationService.removeAllNotificationsByReferenceIds(shareIds, NotificationType.COLLECTION_SHARED);
+        }
+
+        return "Unfriended successfully and " + totalShares + " shared/recommended collection(s) were removed between you and this user.";
     }
 
     public void blockUser(Integer blockerId, Integer blockedId) {
