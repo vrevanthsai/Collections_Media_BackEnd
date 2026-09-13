@@ -30,6 +30,8 @@ public class CategoryService {
     private String path;
 
 //    Default categories data or Admin can later edit them either manually or by using Post-Api
+//    TODO- make this default category values should not be edited once selected when creating account but it can be deleted
+//    - and also give reselection option in FE- if user wants to re-select new default categories
     private static final List<String> DEFAULT_CATEGORIES = List.of(
             "Movies",
             "Anime",

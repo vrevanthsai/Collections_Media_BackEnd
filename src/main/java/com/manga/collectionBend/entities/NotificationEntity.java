@@ -33,7 +33,7 @@ public class NotificationEntity {
     @Column(nullable = false)
     private NotificationType type;
 
-    // points to the relevant entity (FriendConnection id, Shared_Collection id, etc.) depending on `type`
+    // points to the relevant entity (FriendConnection id, Shared_Collection id, etc.) depending on `type` and for SUSPENDED_USER type- we add suspendedUserId for both actor and referenceId
     private Integer referenceId;
 
     // shared collection count, meaningful only for certain types (e.g. COLLECTION_SHARED)
