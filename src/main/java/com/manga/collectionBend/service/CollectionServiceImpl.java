@@ -332,6 +332,21 @@ public class CollectionServiceImpl implements CollectionService{
 //        set new imageName to collectionDto object
         collectionDto.setImagename(fileName);
 
+        // fetch and set the new category, only if it actually changed
+        if (collectionDto.getCategory() != null
+                && !Objects.equals(existingCollection.getCategory().getCategoryId(), collectionDto.getCategory())) {
+
+            CategoryEntity newCategory = categoryRepo.findById(collectionDto.getCategory())
+                    .orElseThrow(() -> new RuntimeException("Category not found with id = " + collectionDto.getCategory()));
+
+            // optional but recommended — ensure the new category actually belongs to this user
+            if (!newCategory.getUser().getUserId().equals(userId)) {
+                return ApiResponse.error("You cannot move this collection to a category that isn't yours");
+            }
+
+            existingCollection.setCategory(newCategory); // the missing line
+        }
+
 //        Update Rule - only use existingCollection object for .save() instead of creating new collectionEntity object
 //      no referring to User or Category Entity is required in Update feature because they are already
         existingCollection.setName(collectionDto.getName());

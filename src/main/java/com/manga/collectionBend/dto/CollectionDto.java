@@ -35,7 +35,7 @@ public class CollectionDto {
     private String name;
 
     @NotBlank(message = "Please provide collection's category")
-    private Integer category;
+    private Integer category; // we are storing categoryId number-value- not CategoryEntity reference
 
     // Used for GET responses- used in Collection-GET apis to send categoryName instead of categoryId to frontend
     private String categoryName;
