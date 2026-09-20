@@ -10,4 +10,5 @@ import lombok.Setter;
 public class CategoryResponse {
     private Integer categoryId;
     private String categoryName;
+    private boolean isEditable;
 }

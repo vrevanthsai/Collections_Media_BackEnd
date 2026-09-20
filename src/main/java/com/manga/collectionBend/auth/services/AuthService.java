@@ -10,6 +10,7 @@ import com.manga.collectionBend.dto.ApiResponse;
 import com.manga.collectionBend.entities.CategoryEntity;
 import com.manga.collectionBend.exceptions.InvalidCredentialsException;
 import com.manga.collectionBend.repositories.CategoryRepo;
+import com.manga.collectionBend.service.CategoryService;
 import com.manga.collectionBend.service.NotificationService;
 import com.manga.collectionBend.utils.NotificationType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,9 +32,10 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final CategoryRepo categoryRepo;
     private final NotificationService notificationService;
+    private final CategoryService categoryService;
 
 //  Constructor Dependency Injection
-    public AuthService(PasswordEncoder passwordEncoder, UserRepo userRepo, JwtService jwtService, RefreshTokenService refreshTokenService, AuthenticationManager authenticationManager, CategoryRepo categoryRepo, NotificationService notificationService) {
+    public AuthService(PasswordEncoder passwordEncoder, UserRepo userRepo, JwtService jwtService, RefreshTokenService refreshTokenService, AuthenticationManager authenticationManager, CategoryRepo categoryRepo, NotificationService notificationService, CategoryService categoryService) {
         this.passwordEncoder = passwordEncoder;
         this.userRepo = userRepo;
         this.jwtService = jwtService;
@@ -41,6 +43,7 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
         this.categoryRepo = categoryRepo;
         this.notificationService = notificationService;
+        this.categoryService = categoryService;
     }
 
 //    Register Api service Method
@@ -81,16 +84,9 @@ public class AuthService {
 //        Saving the Stored-Object into UserTable
         UserEntity savedUser = userRepo.save(user);
 
-//        Save Categories After User Registration
-        for(String categoryName : registerRequest.getSelectedCategories()) {
-
-            CategoryEntity category = new CategoryEntity();
-
-            category.setCategoryName(categoryName);
-            category.setUser(savedUser);
-
-            categoryRepo.save(category);
-        }
+//        Save Default Categories After User Registration
+//        method will auto add the selected default categories names from frontend to direct into user-based categories table
+        categoryService.createDefaultCategoriesForUser(savedUser, registerRequest.getSelectedCategories());
 
 //        generating Jwt Access token and RefreshToken after successfully saving data
         var accessToken = jwtService.generateToken(savedUser);
