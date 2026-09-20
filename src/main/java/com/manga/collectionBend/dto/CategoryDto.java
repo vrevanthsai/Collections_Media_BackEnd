@@ -11,14 +11,14 @@ import lombok.*;
 @Builder
 public class CategoryDto {
 
-    private Integer id;
+    private Integer categoryId;
     private String categoryName; // this now always holds the CORRECT, live name regardless of source
     private boolean isEditable;
 
     // for regular/custom user-owned categories
     public static CategoryDto fromEntity(CategoryEntity category) {
         return CategoryDto.builder()
-                .id(category.getCategoryId())
+                .categoryId(category.getCategoryId())
                 .categoryName(category.getEffectiveCategoryName()) // always resolves correctly
                 .isEditable(category.isEditable())
                 .build();
@@ -27,7 +27,7 @@ public class CategoryDto {
 //    for admin-based default categories
     public static CategoryDto fromDefaultEntity(DefaultCategoryEntity defaultCategory) {
         return CategoryDto.builder()
-                .id(defaultCategory.getId())
+                .categoryId(defaultCategory.getId())
                 .categoryName(defaultCategory.getCategoryName())
                 .isEditable(false)
                 .build();

@@ -64,13 +64,17 @@ public class CategoryService {
 
     public List<CategoryResponse> getCategoriesByUser(Integer userId) {
 
-        return categoryRepo.findByUserUserId(userId)
+        return categoryRepo.findByUserUserIdOrderByCategoryIdAsc(userId)
                 .stream()
                 .map(category -> {
                     CategoryResponse dto = new CategoryResponse();
                     dto.setCategoryId(category.getCategoryId());
                     dto.setCategoryName(category.getEffectiveCategoryName());
                     dto.setEditable(category.isEditable()); // lets frontend conditionally hide Edit button
+                    // null-safe — only set if this category originated from a default
+                    dto.setDefaultCategoryId(
+                            category.getDefaultCategory() != null ? category.getDefaultCategory().getId() : null
+                    );
                     return dto;
                 })
                 .toList();
@@ -113,6 +117,7 @@ public class CategoryService {
         dto.setCategoryId(savedCategory.getCategoryId());
         dto.setCategoryName(savedCategory.getEffectiveCategoryName()); // use effective name here too, for consistency
         dto.setEditable(savedCategory.isEditable());
+        dto.setDefaultCategoryId(null); // custom category — no default source
         return ApiResponse.success(dto);
     }
 
@@ -189,5 +194,41 @@ public class CategoryService {
         }else {
             throw new IllegalStateException("You userId: "+ userId +" are not authorized to delete other user's data!");
         }
+    }
+
+//   Method - used for Adding new Default category - a user needs to add one default category at a time from the list of ones they don't already have.
+    public ApiResponse<CategoryResponse> addDefaultCategoryToUser(Integer userId, Integer defaultCategoryId) {
+        UserEntity user = userRepo.findById(userId).orElse(null);
+        if (user == null) {
+            return ApiResponse.error("User not found");
+        }
+
+        DefaultCategoryEntity defaultCategory = defaultCategoryRepo.findById(defaultCategoryId)
+                .orElse(null);
+        if (defaultCategory == null || !defaultCategory.isActive()) {
+            return ApiResponse.error("Default category not found or inactive");
+        }
+
+        boolean alreadyAdded = categoryRepo.findByUserUserId(userId).stream()
+                .anyMatch(c -> c.getDefaultCategory() != null
+                        && c.getDefaultCategory().getId().equals(defaultCategoryId));
+
+        if (alreadyAdded) {
+            return ApiResponse.error("You already have this category");
+        }
+
+        CategoryEntity category = new CategoryEntity();
+        category.setUser(user);
+        category.setDefaultCategory(defaultCategory);
+        category.setEditable(false);
+
+        CategoryEntity saved = categoryRepo.save(category);
+
+        CategoryResponse dto = new CategoryResponse();
+        dto.setCategoryId(saved.getCategoryId());
+        dto.setCategoryName(saved.getEffectiveCategoryName());
+        dto.setEditable(false);
+        dto.setDefaultCategoryId(defaultCategory.getId()); // set here
+        return ApiResponse.success(dto);
     }
 }
