@@ -258,7 +258,7 @@ public class ProfileService {
                         collection.getImagename(),
                         collectionUrl
                 );
-                collectionDto.setCategoryName(collection.getCategory().getCategoryName());
+                collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
                 filteredOtherUserCollections.add(collectionDto);
             }
 
@@ -281,7 +281,7 @@ public class ProfileService {
                             collection.getImagename(),
                             collectionUrl
                     );
-                    collectionDto.setCategoryName(collection.getCategory().getCategoryName());
+                    collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
                     filteredOtherUserCollections.add(collectionDto);
                 }
             }

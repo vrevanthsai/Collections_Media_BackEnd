@@ -144,7 +144,7 @@ public class CollectionServiceImpl implements CollectionService{
                 collectionUrl
         );
 //        to send new field to frontend
-        response.setCategoryName(collection.getCategory().getCategoryName());
+        response.setCategoryName(collection.getCategory().getEffectiveCategoryName());
 
         return ApiResponse.success(response);
     }
@@ -200,7 +200,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
-            response.setCategoryName(collection.getCategory().getCategoryName());
+            response.setCategoryName(collection.getCategory().getEffectiveCategoryName());
         } else {
 //            TODO- send error msg to Frontend using ApiResponse class instead of throwing error
             throw new IllegalStateException("You userId: "+ userId +" are not authorized to access other user's private data!");
@@ -239,7 +239,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
-            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
+            collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
             collectionDtos.add(collectionDto);
         }
 
@@ -277,7 +277,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
-            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
+            collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
             collectionDtos.add(collectionDto);
         }
 
@@ -374,7 +374,7 @@ public class CollectionServiceImpl implements CollectionService{
                 updatedCollection.getImagename(),
                 collectionUrl
         );
-        response.setCategoryName(updatedCollection.getCategory().getCategoryName());
+        response.setCategoryName(updatedCollection.getCategory().getEffectiveCategoryName());
 
         return ApiResponse.success(response);
     }
@@ -439,7 +439,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
-            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
+            collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
 //            we convert entity data to DTO object and send that DTO only to controller, not direct entity object
             collectionDtos.add(collectionDto);
         }
@@ -493,7 +493,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getImagename(),
                     collectionUrl
             );
-            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
+            collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
 //            we convert entity data to DTO object and send that DTO only to controller, not direct entity object
             collectionDtos.add(collectionDto);
         }

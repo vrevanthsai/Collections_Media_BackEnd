@@ -44,10 +44,14 @@ public class CategoryController {
 
 //    Update-Api category
     @PutMapping("/update-category/{categoryId}")
-    public ResponseEntity<CategoryResponse> updateCategoryHandler(@PathVariable Integer categoryId, @RequestBody CategoryRequest categoryRequest, @PathVariable Integer userId) {
-        return ResponseEntity.ok(
-                categoryService.updateCategoryHandler(categoryId, categoryRequest, userId)
-        );
+    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategoryHandler(@PathVariable Integer categoryId, @RequestBody CategoryRequest categoryRequest, @PathVariable Integer userId) {
+        ApiResponse<CategoryResponse> response = categoryService.updateCategoryHandler(categoryId, categoryRequest, userId);
+//        send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+//        send success=true, with CategoryResponse data object when no errors are there
+        return ResponseEntity.ok(response);
     }
 
 //    Delete-Api category
