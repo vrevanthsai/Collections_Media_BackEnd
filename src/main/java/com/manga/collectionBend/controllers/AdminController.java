@@ -91,14 +91,14 @@ public class AdminController {
 
 //    instead of Deleting Default category value which will be linked to User based categories - we edit this deactivate  or activate value to false(meaning it will not be used anymore)
 //    MAJORLY - This 2 Api will not be used
-    @PatchMapping("/{id}/deactivate")
+    @PatchMapping("/default-category/{id}/deactivate")
     public ApiResponse<String> deactivate(@PathVariable Integer id) {
         var entity = defaultCategoryRepo.findById(id).orElseThrow();
         entity.setActive(false);
         defaultCategoryRepo.save(entity);
         return ApiResponse.success("Default category deactivated");
     }
-    @PatchMapping("/{id}/activate")
+    @PatchMapping("/default-category/{id}/activate")
     public ApiResponse<String> activate(@PathVariable Integer id) {
         var entity = defaultCategoryRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Default category not found with id: " + id));
