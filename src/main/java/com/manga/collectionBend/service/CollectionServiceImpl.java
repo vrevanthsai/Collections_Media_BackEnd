@@ -420,6 +420,12 @@ public class CollectionServiceImpl implements CollectionService{
         return "Collection deleted with name = " + collectionName;
     }
 
+//
+    public List<CollectionEntity> getPublicCollections(int maxRecords) {
+        Pageable limit = PageRequest.of(0, maxRecords); // page 0, size = maxRecords
+        return collectionRepo.findByPublicCollections(limit);
+    }
+
     @Override
     public CollectionPageResponse getAllCollectionsWithPagination(Integer pageNumber, Integer pageSize) {
 //        Pageable is interface and PageRequest.of() returns Pageable object
