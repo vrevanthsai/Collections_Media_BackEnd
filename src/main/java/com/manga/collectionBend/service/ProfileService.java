@@ -256,6 +256,7 @@ public class ProfileService {
                         collection.getPrivacy(),
                         collection.getAddedDate(),
                         collection.getImagename(),
+                        collection.isFavorite(),
                         collectionUrl
                 );
                 collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
@@ -279,6 +280,7 @@ public class ProfileService {
                             collection.getPrivacy(),
                             collection.getAddedDate(),
                             collection.getImagename(),
+                            collection.isFavorite(),
                             collectionUrl
                     );
                     collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());

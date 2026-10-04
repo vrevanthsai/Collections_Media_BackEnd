@@ -141,6 +141,7 @@ public class CollectionServiceImpl implements CollectionService{
                 savedCollection.getPrivacy(),
                 savedCollection.getAddedDate(),
                 savedCollection.getImagename(),
+                savedCollection.isFavorite(),
                 collectionUrl
         );
 //        to send new field to frontend
@@ -198,6 +199,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getPrivacy(),
                     collection.getAddedDate(),
                     collection.getImagename(),
+                    collection.isFavorite(),
                     collectionUrl
             );
             response.setCategoryName(collection.getCategory().getEffectiveCategoryName());
@@ -237,6 +239,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getPrivacy(),
                     collection.getAddedDate(),
                     collection.getImagename(),
+                    collection.isFavorite(),
                     collectionUrl
             );
             collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
@@ -275,6 +278,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getPrivacy(),
                     collection.getAddedDate(),
                     collection.getImagename(),
+                    collection.isFavorite(),
                     collectionUrl
             );
             collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
@@ -282,6 +286,27 @@ public class CollectionServiceImpl implements CollectionService{
         }
 
         return collectionDtos;
+    }
+
+    @Override
+    public String updateFavoriteCollection(Integer collectionId, boolean favorite) {
+        //        check if collection object/record exists with given collectionId or not
+        CollectionEntity existingCollection = collectionRepo.findById(collectionId)
+                .orElseThrow(() -> new CollectionNotFoundExpception("Collection not found with id = " + collectionId));
+
+        if(existingCollection.getCollectionId() != null){
+            if(favorite){
+                existingCollection.setFavorite(true);
+                collectionRepo.save(existingCollection);
+                return "This Collection "+ existingCollection.getName() +" has been marked favorite";
+            } else {
+                existingCollection.setFavorite(false);
+                collectionRepo.save(existingCollection);
+                return "This Collection "+ existingCollection.getName() +" has been removed from favorites";
+            }
+        } else {
+            return "Not collection data found with provided id = " + collectionId;
+        }
     }
 
     @Override
@@ -387,6 +412,7 @@ public class CollectionServiceImpl implements CollectionService{
                 updatedCollection.getPrivacy(),
                 updatedCollection.getAddedDate(),
                 updatedCollection.getImagename(),
+                updatedCollection.isFavorite(),
                 collectionUrl
         );
         response.setCategoryName(updatedCollection.getCategory().getEffectiveCategoryName());
@@ -458,6 +484,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getPrivacy(),
                     collection.getAddedDate(),
                     collection.getImagename(),
+                    collection.isFavorite(),
                     collectionUrl
             );
             collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
@@ -512,6 +539,7 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getPrivacy(),
                     collection.getAddedDate(),
                     collection.getImagename(),
+                    collection.isFavorite(),
                     collectionUrl
             );
             collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());

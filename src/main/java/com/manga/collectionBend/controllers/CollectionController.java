@@ -113,6 +113,12 @@ public class CollectionController {
         return ResponseEntity.ok(collectionService.deleteCollection(collectionId, userId));
     }
 
+//    Api to update Favorite column to True or False of a Collection_id provided
+    @PatchMapping("/update-favorite/{collectionId}")
+    public ResponseEntity<String> updateFavoriteCollectionHandler(@PathVariable Integer collectionId, @RequestParam boolean favorite){
+        return ResponseEntity.ok(collectionService.updateFavoriteCollection(collectionId, favorite));
+    }
+
 //    Get-All collections Api with Pagination logic
     @GetMapping("/allCollectionsPage")
     public ResponseEntity<CollectionPageResponse> getCollectionsPagination(

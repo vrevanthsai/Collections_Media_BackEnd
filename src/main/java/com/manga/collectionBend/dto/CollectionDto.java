@@ -11,7 +11,7 @@ import lombok.Data;
 //@AllArgsConstructor
 public class CollectionDto {
 
-    public CollectionDto(Integer collectionId, String name, Integer category, Integer userId, String username, Integer rating, String review, String progress, CollectionPrivacy privacy, String addedDate, String imagename, String imageUrl) {
+    public CollectionDto(Integer collectionId, String name, Integer category, Integer userId, String username, Integer rating, String review, String progress, CollectionPrivacy privacy, String addedDate, String imagename, boolean favorite, String imageUrl) {
         this.collectionId = collectionId;
         this.name = name;
         this.category = category;
@@ -24,6 +24,7 @@ public class CollectionDto {
         this.addedDate = addedDate;
         this.imagename = imagename;
         this.imageUrl = imageUrl;
+        this.favorite = favorite;
     }
 
     public CollectionDto() {
@@ -63,6 +64,8 @@ public class CollectionDto {
 
     @NotBlank(message = "Please provide collection's imagename")
     private String imagename;
+
+    private boolean favorite;
 
     @NotBlank(message = "Please provide collection's ImageURL")
     private String imageUrl;
@@ -169,5 +172,13 @@ public class CollectionDto {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public boolean isFavorite() {
+        return favorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
     }
 }
