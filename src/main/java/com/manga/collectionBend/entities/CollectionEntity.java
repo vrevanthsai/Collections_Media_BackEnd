@@ -35,8 +35,7 @@ public class CollectionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer collectionId;
 
-    //    this var/column contains unique naming value - only one unique name exists for each collection to prevent duplicate entries
-    @Column(nullable = false, length = 300, unique = true)
+    @Column(nullable = false, length = 300)
     @NotBlank(message = "Please provide collection's name")
     private String name;
 
