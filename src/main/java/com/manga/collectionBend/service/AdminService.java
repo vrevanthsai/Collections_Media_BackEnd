@@ -3,6 +3,8 @@ package com.manga.collectionBend.service;
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.dto.UserDto;
+import com.manga.collectionBend.repositories.NotificationRepo;
+import com.manga.collectionBend.utils.NotificationType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -22,12 +24,14 @@ import java.util.stream.Stream;
 @Service
 public class AdminService {
     private final UserRepo userRepo;
+    private final NotificationService notificationService;
 
     @Value("${project.collectionImage}")
     private String path;
 
-    public AdminService(UserRepo userRepo) {
+    public AdminService(UserRepo userRepo, NotificationService notificationService) {
         this.userRepo = userRepo;
+        this.notificationService = notificationService;
     }
 
     public List<UserDto> getAllUsersHandler() {
@@ -79,6 +83,9 @@ public class AdminService {
         // check if user exists or not
         var existingUser = userRepo.findById(userAccountId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with provided userid:" + userAccountId));
+        //        get Admin account details or UserEntity by Manually or Hardcoded userId of Admin-account stored in DB-Users-table
+        Integer adminUserId = 1; // check in DB and update userId value if changed to new admin account(which has ADMIN for role-column)
+        UserEntity admin = userRepo.findById(adminUserId).orElseThrow(() -> new UsernameNotFoundException("Admin-account not found with provided Id"));
 
         if(Objects.equals(suspendValue, "suspend")) {
             existingUser.setSuspended(true);
@@ -90,6 +97,9 @@ public class AdminService {
             existingUser.setSuspended(false);
             // save updated user
             userRepo.save(existingUser);
+//            create a notification to suspended user account that his account is activated
+//            and we will not delete the suspendedUser request notification data from Admin account- because Admin must know or have data - who he suspended and who requested
+            notificationService.createNotification(existingUser, admin, NotificationType.ACTIVATED_USER, existingUser.getUserId()); // here existingUser is suspendedUser account
             return "This user has been Activated with UserId: " + existingUser.getUserId();
         } else {
             return "Incorrect suspendValue give- only send with suspend or activate";

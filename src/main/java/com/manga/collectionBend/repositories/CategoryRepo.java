@@ -12,4 +12,6 @@ public interface CategoryRepo extends JpaRepository<CategoryEntity,Integer> {
 //   naming formate- findBy+CapitalFirstLetter of Field/Column name(eg-Username)
 //    findBy + User(parent-Category-table/entity field name) + UserId(is child-UserTable/Entity field name which is inside parent-Category table)
     List<CategoryEntity> findByUserUserId(Integer userId);
+
+    List<CategoryEntity> findByUserUserIdOrderByCategoryIdAsc(Integer userId);
 }

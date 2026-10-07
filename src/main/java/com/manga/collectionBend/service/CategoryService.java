@@ -5,8 +5,10 @@ import com.manga.collectionBend.auth.repositories.UserRepo;
 import com.manga.collectionBend.dto.*;
 import com.manga.collectionBend.entities.CategoryEntity;
 import com.manga.collectionBend.entities.CollectionEntity;
+import com.manga.collectionBend.entities.DefaultCategoryEntity;
 import com.manga.collectionBend.repositories.CategoryRepo;
 import com.manga.collectionBend.repositories.CollectionRepo;
+import com.manga.collectionBend.repositories.DefaultCategoryRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,38 +27,54 @@ public class CategoryService {
     @Autowired
     private UserRepo userRepo;
     private final CollectionRepo collectionRepo;
+    private final DefaultCategoryRepo defaultCategoryRepo;
 
     @Value("${project.collectionImage}")
     private String path;
 
-//    Default categories data or Admin can later edit them either manually or by using Post-Api
-    private static final List<String> DEFAULT_CATEGORIES = List.of(
-            "Movies",
-            "Anime",
-            "Series",
-            "Books",
-            "Games"
-    );
-
-    public CategoryService(CategoryRepo categoryRepo, CollectionRepo collectionRepo) {
+    public CategoryService(CategoryRepo categoryRepo, CollectionRepo collectionRepo, DefaultCategoryRepo defaultCategoryRepo) {
         this.categoryRepo = categoryRepo;
         this.collectionRepo = collectionRepo;
+        this.defaultCategoryRepo = defaultCategoryRepo;
+    }
+
+//    instead of Manual or static data for default-categories - we use this method which auto checks default-categories with provided categoryNames and adds them to user-based categories
+    public void createDefaultCategoriesForUser(UserEntity savedUser, List<String> selectedCategoryNames) {
+        // fetch only the ACTIVE default categories the admin currently manages
+        List<DefaultCategoryEntity> selectedDefaults = defaultCategoryRepo.findByActiveTrue().stream()
+                .filter(dc -> selectedCategoryNames.contains(dc.getCategoryName()))
+                .toList();
+
+        for (DefaultCategoryEntity defaultCategory : selectedDefaults) {
+            CategoryEntity category = new CategoryEntity();
+            // categoryName intentionally left null — name is derived live from defaultCategory
+            category.setUser(savedUser);
+            category.setDefaultCategory(defaultCategory); // link back to the admin-managed source
+            category.setEditable(false);                   // not editable/renamable by the user
+
+            categoryRepo.save(category);
+        }
     }
 
     public List<CategoryDto> getDefaultCategories() {
-        return DEFAULT_CATEGORIES.stream()
-                .map(CategoryDto::new)
+        return defaultCategoryRepo.findByActiveTrue().stream()
+                .map(CategoryDto::fromDefaultEntity)
                 .toList();
     }
 
     public List<CategoryResponse> getCategoriesByUser(Integer userId) {
 
-        return categoryRepo.findByUserUserId(userId)
+        return categoryRepo.findByUserUserIdOrderByCategoryIdAsc(userId)
                 .stream()
                 .map(category -> {
                     CategoryResponse dto = new CategoryResponse();
                     dto.setCategoryId(category.getCategoryId());
-                    dto.setCategoryName(category.getCategoryName());
+                    dto.setCategoryName(category.getEffectiveCategoryName());
+                    dto.setEditable(category.isEditable()); // lets frontend conditionally hide Edit button
+                    // null-safe — only set if this category originated from a default
+                    dto.setDefaultCategoryId(
+                            category.getDefaultCategory() != null ? category.getDefaultCategory().getId() : null
+                    );
                     return dto;
                 })
                 .toList();
@@ -70,33 +88,48 @@ public class CategoryService {
             return ApiResponse.error("User not found with ID: " + userId);
         }
 
+        String trimmedName = categoryRequest.getCategoryName().trim();
+
+        if (trimmedName.isEmpty()) {
+            return ApiResponse.error("Category name cannot be empty");
+        }
+
         List<CategoryEntity> categories = categoryRepo.findByUserUserId(userId);
 
-        // Check for duplicate category name (case-insensitive) to prevent duplicate data creations
+        // use getEffectiveCategoryName() to safely check both default-sourced and custom categories
         boolean isDuplicate = categories.stream()
-                .anyMatch(category -> category.getCategoryName()
-                        .equalsIgnoreCase(categoryRequest.getCategoryName().trim()));
+                .anyMatch(category -> category.getEffectiveCategoryName()
+                        .equalsIgnoreCase(trimmedName));
 
         if (isDuplicate) {
-            return ApiResponse.error("Category '" + categoryRequest.getCategoryName() + "' already exists.");
+            return ApiResponse.error("Category '" + trimmedName + "' already exists.");
         }
 
         CategoryEntity categoryEntity = new CategoryEntity();
-        categoryEntity.setCategoryName(categoryRequest.getCategoryName());
+        categoryEntity.setCategoryName(trimmedName); // store the trimmed version, not the raw input
         categoryEntity.setUser(user);
+        categoryEntity.setDefaultCategory(null);
+        categoryEntity.setEditable(true);
 //      save the data
         CategoryEntity savedCategory = categoryRepo.save(categoryEntity);
 //      return sample data after saving
         CategoryResponse dto = new CategoryResponse();
         dto.setCategoryId(savedCategory.getCategoryId());
-        dto.setCategoryName(savedCategory.getCategoryName());
+        dto.setCategoryName(savedCategory.getEffectiveCategoryName()); // use effective name here too, for consistency
+        dto.setEditable(savedCategory.isEditable());
+        dto.setDefaultCategoryId(null); // custom category — no default source
         return ApiResponse.success(dto);
     }
 
-    public CategoryResponse updateCategoryHandler(Integer categoryId, CategoryRequest categoryRequest, Integer userId) {
+    public ApiResponse<CategoryResponse> updateCategoryHandler(Integer categoryId, CategoryRequest categoryRequest, Integer userId) {
 //       Validation check - get Category data based on provided category-id
         CategoryEntity existingCategory = categoryRepo.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found with id = " + categoryId));
+
+        if (!existingCategory.isEditable()) {
+//            throw new IllegalStateException("This is a default category and cannot be renamed");
+            return ApiResponse.error("This is a default category and cannot be renamed");
+        }
 
 //        UserId Validation check- to see if same user is trying to update his data or some one
 //        if same - we update or not same - we throw error
@@ -113,10 +146,11 @@ public class CategoryService {
 
             CategoryResponse dto = new CategoryResponse();
             dto.setCategoryId(updatedCategory.getCategoryId());
-            dto.setCategoryName(updatedCategory.getCategoryName());
-            return dto;
+            dto.setCategoryName(updatedCategory.getEffectiveCategoryName());
+            return ApiResponse.success(dto);
         } else {
-            throw new IllegalStateException("You userId: "+ userId +" are not authorized to update other user's data!");
+//            throw new IllegalStateException("You userId: "+ userId +" are not authorized to update other user's data!");
+            return ApiResponse.error("You userId: "+ userId +" are not authorized to update other user's data!");
         }
     }
 
@@ -125,7 +159,7 @@ public class CategoryService {
         CategoryEntity existingCategory = categoryRepo.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found with id = " + categoryId));
 
-        String categoryName = existingCategory.getCategoryName();
+        String categoryName = existingCategory.getEffectiveCategoryName();
         //        UserId Validation check- to see if same user is trying to update his data or some one
 //        if same - we delete or not same - we throw error
         if(Objects.equals(userId, existingCategory.getUser().getUserId())) {
@@ -160,5 +194,41 @@ public class CategoryService {
         }else {
             throw new IllegalStateException("You userId: "+ userId +" are not authorized to delete other user's data!");
         }
+    }
+
+//   Method - used for Adding new Default category - a user needs to add one default category at a time from the list of ones they don't already have.
+    public ApiResponse<CategoryResponse> addDefaultCategoryToUser(Integer userId, Integer defaultCategoryId) {
+        UserEntity user = userRepo.findById(userId).orElse(null);
+        if (user == null) {
+            return ApiResponse.error("User not found");
+        }
+
+        DefaultCategoryEntity defaultCategory = defaultCategoryRepo.findById(defaultCategoryId)
+                .orElse(null);
+        if (defaultCategory == null || !defaultCategory.isActive()) {
+            return ApiResponse.error("Default category not found or inactive");
+        }
+
+        boolean alreadyAdded = categoryRepo.findByUserUserId(userId).stream()
+                .anyMatch(c -> c.getDefaultCategory() != null
+                        && c.getDefaultCategory().getId().equals(defaultCategoryId));
+
+        if (alreadyAdded) {
+            return ApiResponse.error("You already have this category");
+        }
+
+        CategoryEntity category = new CategoryEntity();
+        category.setUser(user);
+        category.setDefaultCategory(defaultCategory);
+        category.setEditable(false);
+
+        CategoryEntity saved = categoryRepo.save(category);
+
+        CategoryResponse dto = new CategoryResponse();
+        dto.setCategoryId(saved.getCategoryId());
+        dto.setCategoryName(saved.getEffectiveCategoryName());
+        dto.setEditable(false);
+        dto.setDefaultCategoryId(defaultCategory.getId()); // set here
+        return ApiResponse.success(dto);
     }
 }

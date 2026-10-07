@@ -29,7 +29,7 @@ public class SharedCollectionDto {
                 .collectionId(share.getCollection().getCollectionId())
                 .collectionName(share.getCollection().getName())
 //                .imageName(share.getCollection().getImagename())
-                .categoryName(share.getCollection().getCategory().getCategoryName())
+                .categoryName(share.getCollection().getCategory().getEffectiveCategoryName())
                 .sharedByUsername(share.getSharedBy().getUniqueUsername())
                 .sharedAt(share.getSharedAt())
                 .isViewed(share.isViewed())

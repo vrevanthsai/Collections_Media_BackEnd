@@ -141,10 +141,11 @@ public class CollectionServiceImpl implements CollectionService{
                 savedCollection.getPrivacy(),
                 savedCollection.getAddedDate(),
                 savedCollection.getImagename(),
+                savedCollection.isFavorite(),
                 collectionUrl
         );
 //        to send new field to frontend
-        response.setCategoryName(collection.getCategory().getCategoryName());
+        response.setCategoryName(collection.getCategory().getEffectiveCategoryName());
 
         return ApiResponse.success(response);
     }
@@ -198,9 +199,10 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getPrivacy(),
                     collection.getAddedDate(),
                     collection.getImagename(),
+                    collection.isFavorite(),
                     collectionUrl
             );
-            response.setCategoryName(collection.getCategory().getCategoryName());
+            response.setCategoryName(collection.getCategory().getEffectiveCategoryName());
         } else {
 //            TODO- send error msg to Frontend using ApiResponse class instead of throwing error
             throw new IllegalStateException("You userId: "+ userId +" are not authorized to access other user's private data!");
@@ -237,9 +239,10 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getPrivacy(),
                     collection.getAddedDate(),
                     collection.getImagename(),
+                    collection.isFavorite(),
                     collectionUrl
             );
-            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
+            collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
             collectionDtos.add(collectionDto);
         }
 
@@ -275,13 +278,35 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getPrivacy(),
                     collection.getAddedDate(),
                     collection.getImagename(),
+                    collection.isFavorite(),
                     collectionUrl
             );
-            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
+            collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
             collectionDtos.add(collectionDto);
         }
 
         return collectionDtos;
+    }
+
+    @Override
+    public String updateFavoriteCollection(Integer collectionId, boolean favorite) {
+        //        check if collection object/record exists with given collectionId or not
+        CollectionEntity existingCollection = collectionRepo.findById(collectionId)
+                .orElseThrow(() -> new CollectionNotFoundExpception("Collection not found with id = " + collectionId));
+
+        if(existingCollection.getCollectionId() != null){
+            if(favorite){
+                existingCollection.setFavorite(true);
+                collectionRepo.save(existingCollection);
+                return "This Collection "+ existingCollection.getName() +" has been marked favorite";
+            } else {
+                existingCollection.setFavorite(false);
+                collectionRepo.save(existingCollection);
+                return "This Collection "+ existingCollection.getName() +" has been removed from favorites";
+            }
+        } else {
+            return "Not collection data found with provided id = " + collectionId;
+        }
     }
 
     @Override
@@ -332,6 +357,21 @@ public class CollectionServiceImpl implements CollectionService{
 //        set new imageName to collectionDto object
         collectionDto.setImagename(fileName);
 
+        // fetch and set the new category, only if it actually changed
+        if (collectionDto.getCategory() != null
+                && !Objects.equals(existingCollection.getCategory().getCategoryId(), collectionDto.getCategory())) {
+
+            CategoryEntity newCategory = categoryRepo.findById(collectionDto.getCategory())
+                    .orElseThrow(() -> new RuntimeException("Category not found with id = " + collectionDto.getCategory()));
+
+            // optional but recommended — ensure the new category actually belongs to this user
+            if (!newCategory.getUser().getUserId().equals(userId)) {
+                return ApiResponse.error("You cannot move this collection to a category that isn't yours");
+            }
+
+            existingCollection.setCategory(newCategory); // the missing line
+        }
+
 //        Update Rule - only use existingCollection object for .save() instead of creating new collectionEntity object
 //      no referring to User or Category Entity is required in Update feature because they are already
         existingCollection.setName(collectionDto.getName());
@@ -372,9 +412,10 @@ public class CollectionServiceImpl implements CollectionService{
                 updatedCollection.getPrivacy(),
                 updatedCollection.getAddedDate(),
                 updatedCollection.getImagename(),
+                updatedCollection.isFavorite(),
                 collectionUrl
         );
-        response.setCategoryName(updatedCollection.getCategory().getCategoryName());
+        response.setCategoryName(updatedCollection.getCategory().getEffectiveCategoryName());
 
         return ApiResponse.success(response);
     }
@@ -403,6 +444,12 @@ public class CollectionServiceImpl implements CollectionService{
         }
 
         return "Collection deleted with name = " + collectionName;
+    }
+
+//
+    public List<CollectionEntity> getPublicCollections(int maxRecords) {
+        Pageable limit = PageRequest.of(0, maxRecords); // page 0, size = maxRecords
+        return collectionRepo.findByPublicCollections(limit);
     }
 
     @Override
@@ -437,9 +484,10 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getPrivacy(),
                     collection.getAddedDate(),
                     collection.getImagename(),
+                    collection.isFavorite(),
                     collectionUrl
             );
-            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
+            collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
 //            we convert entity data to DTO object and send that DTO only to controller, not direct entity object
             collectionDtos.add(collectionDto);
         }
@@ -491,9 +539,10 @@ public class CollectionServiceImpl implements CollectionService{
                     collection.getPrivacy(),
                     collection.getAddedDate(),
                     collection.getImagename(),
+                    collection.isFavorite(),
                     collectionUrl
             );
-            collectionDto.setCategoryName(collection.getCategory().getCategoryName());
+            collectionDto.setCategoryName(collection.getCategory().getEffectiveCategoryName());
 //            we convert entity data to DTO object and send that DTO only to controller, not direct entity object
             collectionDtos.add(collectionDto);
         }

@@ -93,12 +93,13 @@ public class AuthController {
 //    Here- request var - contains a requesting msg from that Suspended User to - type and send that "I-am-sorry" as input to backend
 //    and then only request gets added to Admin Notification array which Admin can see in frontend
     public ResponseEntity<String> requestAccountActivate(@RequestBody String request,
-                                                         @PathVariable("userId") Integer userId){
+                                                         @PathVariable("userId") Integer userId){ // currentUser - who got his account suspended by Admin
 //        Add service method below later- when Notification flow starts ==
         if(Objects.equals(request, "I-am-sorry")){
-            return ResponseEntity.ok("You request received and it will be reviewed and then only it wll be activated");
+            String response = authService.requestAccountActivate(userId);
+            return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.badRequest().body("Please Type correct- I-am-sorry request message, or else request will not be sent to Admin!!");
+            return ResponseEntity.badRequest().body("Please Type correct- 'I-am-sorry' request message, or else request will not be sent to Admin!!");
         }
     }
 

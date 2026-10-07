@@ -10,6 +10,9 @@ import com.manga.collectionBend.dto.ApiResponse;
 import com.manga.collectionBend.entities.CategoryEntity;
 import com.manga.collectionBend.exceptions.InvalidCredentialsException;
 import com.manga.collectionBend.repositories.CategoryRepo;
+import com.manga.collectionBend.service.CategoryService;
+import com.manga.collectionBend.service.NotificationService;
+import com.manga.collectionBend.utils.NotificationType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,15 +31,19 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final AuthenticationManager authenticationManager;
     private final CategoryRepo categoryRepo;
+    private final NotificationService notificationService;
+    private final CategoryService categoryService;
 
 //  Constructor Dependency Injection
-    public AuthService(PasswordEncoder passwordEncoder, UserRepo userRepo, JwtService jwtService, RefreshTokenService refreshTokenService, AuthenticationManager authenticationManager, CategoryRepo categoryRepo) {
+    public AuthService(PasswordEncoder passwordEncoder, UserRepo userRepo, JwtService jwtService, RefreshTokenService refreshTokenService, AuthenticationManager authenticationManager, CategoryRepo categoryRepo, NotificationService notificationService, CategoryService categoryService) {
         this.passwordEncoder = passwordEncoder;
         this.userRepo = userRepo;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
         this.authenticationManager = authenticationManager;
         this.categoryRepo = categoryRepo;
+        this.notificationService = notificationService;
+        this.categoryService = categoryService;
     }
 
 //    Register Api service Method
@@ -77,16 +84,9 @@ public class AuthService {
 //        Saving the Stored-Object into UserTable
         UserEntity savedUser = userRepo.save(user);
 
-//        Save Categories After User Registration
-        for(String categoryName : registerRequest.getSelectedCategories()) {
-
-            CategoryEntity category = new CategoryEntity();
-
-            category.setCategoryName(categoryName);
-            category.setUser(savedUser);
-
-            categoryRepo.save(category);
-        }
+//        Save Default Categories After User Registration
+//        method will auto add the selected default categories names from frontend to direct into user-based categories table
+        categoryService.createDefaultCategoriesForUser(savedUser, registerRequest.getSelectedCategories());
 
 //        generating Jwt Access token and RefreshToken after successfully saving data
         var accessToken = jwtService.generateToken(savedUser);
@@ -146,5 +146,21 @@ public class AuthService {
                 .build();
 
         return ApiResponse.success(authResponse);
+    }
+
+//    this method only used for sending response to requested suspended user and creating Notification to Admin account
+    public String requestAccountActivate(Integer suspendedUserId){
+//        get Admin account details or UserEntity by Manually or Hardcoded userId of Admin-account stored in DB-Users-table
+        Integer adminUserId = 1; // check in DB and update userId value if changed to new admin account(which has ADMIN for role-column)
+        UserEntity admin = userRepo.findById(adminUserId).orElseThrow(() -> new UsernameNotFoundException("Admin-account not found with provided Id"));
+//        get suspendedUser UserEntity details- because he does not require login for this /requestAccountActivate api
+        UserEntity suspendedUser = userRepo.findById(suspendedUserId).orElseThrow(() -> new UsernameNotFoundException("User-account not found with provided Id"));
+        if(admin.getRole() == UserRole.ADMIN){
+//            create a notification to Admin account with Notification-Type = SUSPENDED_USER
+            notificationService.createNotification(admin, suspendedUser, NotificationType.SUSPENDED_USER, suspendedUser.getUserId()); // here SUSPENDED_USER type- we add suspendedUserId for both actor and referenceId
+            return "You request received and it will be reviewed by Admins and then only it will be activated";
+        } else {
+            return "You are not authorized to request account activation";
+        }
     }
 }

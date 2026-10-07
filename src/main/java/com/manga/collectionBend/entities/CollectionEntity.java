@@ -35,8 +35,7 @@ public class CollectionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer collectionId;
 
-    //    this var/column contains unique naming value - only one unique name exists for each collection to prevent duplicate entries
-    @Column(nullable = false, length = 300, unique = true)
+    @Column(nullable = false, length = 300)
     @NotBlank(message = "Please provide collection's name")
     private String name;
 
@@ -75,6 +74,10 @@ public class CollectionEntity {
     @Column(nullable = true, length = 300)
 //    @NotBlank(message = "Please provide collection's imagename")
     private String imagename;
+
+    @Column(nullable = false)
+//    new column to mark a collection record as Favorite which will be used for FE- Home page filters and initial value is always False for every new collection
+    private boolean favorite = false;
 
 //    this var used for auto-deleting linked child records in SharedCollection table when its linked parent collection record is deleted in this Collections table
     // when this collection is deleted, all shares referencing it are cleaned up too
@@ -159,5 +162,13 @@ public class CollectionEntity {
 
     public void setImagename(String imagename) {
         this.imagename = imagename;
+    }
+
+    public boolean isFavorite() {
+        return favorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
     }
 }

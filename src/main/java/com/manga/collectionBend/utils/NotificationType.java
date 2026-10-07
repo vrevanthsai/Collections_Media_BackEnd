@@ -8,4 +8,5 @@ public enum NotificationType {
     COLLECTION_LIKED,
     UNFRIENDED,         // optional
     SUSPENDED_USER, // Admin based value - where Admin account gets Notification of activateRequest from Suspended_user and admin activates his account by using /suspend Admin api
+    ACTIVATED_USER // this Type of Notification will be received to a user(suspended) when Admin activates his suspended account
 }

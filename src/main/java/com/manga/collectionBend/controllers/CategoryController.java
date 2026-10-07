@@ -1,9 +1,11 @@
 package com.manga.collectionBend.controllers;
 
+import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.dto.*;
 import com.manga.collectionBend.service.CategoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,10 +46,14 @@ public class CategoryController {
 
 //    Update-Api category
     @PutMapping("/update-category/{categoryId}")
-    public ResponseEntity<CategoryResponse> updateCategoryHandler(@PathVariable Integer categoryId, @RequestBody CategoryRequest categoryRequest, @PathVariable Integer userId) {
-        return ResponseEntity.ok(
-                categoryService.updateCategoryHandler(categoryId, categoryRequest, userId)
-        );
+    public ResponseEntity<ApiResponse<CategoryResponse>> updateCategoryHandler(@PathVariable Integer categoryId, @RequestBody CategoryRequest categoryRequest, @PathVariable Integer userId) {
+        ApiResponse<CategoryResponse> response = categoryService.updateCategoryHandler(categoryId, categoryRequest, userId);
+//        send success=false and error msg with Conflict status code- 409 - when any error res comes from service-method
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+//        send success=true, with CategoryResponse data object when no errors are there
+        return ResponseEntity.ok(response);
     }
 
 //    Delete-Api category
@@ -57,4 +63,13 @@ public class CategoryController {
                 categoryService.deleteCategoryHandler(categoryId, userId)
         );
     }
+
+//    Api- to add new Default Category option into user's category list
+    @PostMapping("/add-default-category/{defaultCategoryId}")
+    public ApiResponse<CategoryResponse> addDefaultCategory(
+            @PathVariable Integer defaultCategoryId,
+            @AuthenticationPrincipal UserEntity currentUser) {
+        return categoryService.addDefaultCategoryToUser(currentUser.getUserId(), defaultCategoryId);
+    }
+//    Get default categories list Api is present in AuthController
 }

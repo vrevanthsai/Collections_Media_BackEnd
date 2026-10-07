@@ -3,7 +3,9 @@ package com.manga.collectionBend.repositories;
 import com.manga.collectionBend.auth.entities.UserEntity;
 import com.manga.collectionBend.entities.CategoryEntity;
 import com.manga.collectionBend.entities.CollectionEntity;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,4 +18,12 @@ public interface CollectionRepo extends JpaRepository<CollectionEntity,Integer> 
     List<CollectionEntity> findByUserId(UserEntity userId);
     List<CollectionEntity> findByCategory(CategoryEntity category);
     List<CollectionEntity> findByName(String name);
+
+//    Return only Public Marked Collections latest upto 50 records to CommunityPage/API
+    @Query("""
+        SELECT c FROM CollectionEntity c
+        WHERE c.privacy = 'PUBLIC'
+        ORDER BY c.addedDate DESC
+    """)
+    List<CollectionEntity> findByPublicCollections(Pageable pageable);
 }

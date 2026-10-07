@@ -25,4 +25,6 @@ public interface CollectionService {
                                                                      String sortBy, String dir);
 
     List<CollectionDto> getUserBasedCollections(Integer userid);
+
+    String updateFavoriteCollection(Integer collectionId, boolean favorite);
 }
