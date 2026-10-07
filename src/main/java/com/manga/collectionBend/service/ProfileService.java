@@ -195,7 +195,7 @@ public class ProfileService {
         // search by username (exclude searching for yourself)
         UserEntity user = userRepo.findByUniqueUsername(searchValue);
         List<FriendDto> userResults = new ArrayList<>();
-        if (user != null && !user.getUserId().equals(currentUser.getUserId())) {
+        if (user != null) {
             userResults.add(FriendDto.fromEntity(user));
         }
 
@@ -226,11 +226,8 @@ public class ProfileService {
         UserEntity otherUser = userRepo.findById(otherUserId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with provided userid:" + otherUserId));
         FriendDto otherUserDto = new FriendDto();
-        if (!otherUser.getUserId().equals(currentUserId)) { // prevent adding user data if other IDs are same to prevent currentUser to view his own user view page
-            otherUserDto = FriendDto.fromEntity(otherUser);
-        } else {
-            throw new IllegalStateException("Both IDs should not be the same");
-        }
+//        Now currentUser can view his own profile page through this userViewPage Api instead of preventing it when both Ids are same
+        otherUserDto = FriendDto.fromEntity(otherUser);
 
 //        search/find his collections data/list which are marked as PUBLIC as privacy
         List<CollectionEntity> otherUserBasedCollections = collectionRepo.findByUserId(otherUser); //search by userEntity
